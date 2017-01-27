@@ -1,23 +1,15 @@
-# Heroku buildpack for [PredictionIO](http://predictionio.incubator.apache.org)
+# Deploy [PredictionIO](http://predictionio.incubator.apache.org) to Heroku with a template or custom engine
 
-👓 Requires intermediate technical skills working with PredictionIO engines.
+👓 Requires intermediate technical skills working with PredictionIO.
 
-🍎 For an simpler demo of PredictionIO, try the [example Predictive Classification app](README.md).
+🍎 For an simpler demo of PredictionIO, try the [example Predictive Classification app](https://github.com/heroku/predictionio-engine-classification).
 
-## Architecture
+🗺 See the [buildpack README](README.md) for an overview of the tools used in these docs.
 
-Two apps are composed to make a basic PredictionIO service:
-
-1. **Engine**: a specialized machine learning app which provides training of a model and then queries against that model; generated from a [template](https://predictionio.incubator.apache.org/gallery/template-gallery/) or [custom code](https://predictionio.incubator.apache.org/customize/).
-2. **Eventserver**: a simple HTTP API app for capturing events to process from other systems; shareable between multiple engines.
-
-This buildpack will deploy both of these apps: Engine when `engine.json` is present and otherwise Eventserver.
-
-The limited resources of a single dyno restrict use of typically large, statistically significant datasets. Only **Performance-L** dynos with 14GB RAM (currently $16/day) provide reasonable utility in this configuration.
 
 ## Docs 📚
 
-✏️ Throughout these docs, code terms that start with `$` represent a value (shell variable) that should be replaced with a customized value, e.g `$eventserver_name`, `$engine_name`, `$postgres_addon_id`…
+✏️ Throughout this document, code terms that start with `$` represent a value (shell variable) that should be replaced with a customized value, e.g `$EVENTSERVER_NAME`, `$ENGINE_NAME`, `$POSTGRES_ADDON_ID`…
 
 Please, follow the steps in the order documented.
 
@@ -37,6 +29,7 @@ Please, follow the steps in the order documented.
   * [Automatic training](#automatic-training)
   * [Manual training](#manual-training)
 * [Scale-up](#scale-up)
+* [Retry release](#retry-release)
 * [Evaluation](#evaluation)
   1. [Changes required for evaluation](#changes-required-for-evaluation)
   1. [Perform evaluation](#perform-evaluation)
@@ -50,17 +43,22 @@ Please, follow the steps in the order documented.
 
 ### Create the eventserver
 
+⚠️ **An eventserver may host data for multiple engines.** If you already have one provisioned, you may skip to the [engine](#engine).
+
+⚠️ **Not required for engines that exclusively use a custom data source.**
+
 ```bash
 git clone https://github.com/heroku/predictionio-buildpack.git pio-eventserver
 cd pio-eventserver
 
-heroku create $eventserver_name
+heroku create $EVENTSERVER_NAME
 heroku addons:create heroku-postgresql:hobby-dev
+# Note the buildpacks differ for eventserver & engine (below)
 heroku buildpacks:add -i 1 https://github.com/heroku/predictionio-buildpack.git
 heroku buildpacks:add -i 2 heroku/scala
 ```
 
-* Note the Postgres add-on identifier, e.g. `postgresql-aerodynamic-00000`; use it below in place of `$postgres_addon_id`
+* Note the Postgres add-on identifier, e.g. `postgresql-aerodynamic-00000`; use it below in place of `$POSTGRES_ADDON_ID`
 * You may want to specify `heroku-postgresql:standard-0` instead, because the free `hobby-dev` database is limited to 10,000 records.
 
 ### Deploy the eventserver
@@ -76,7 +74,7 @@ heroku pg:wait && git push heroku master
 
 Select an engine from the [gallery](https://predictionio.incubator.apache.org/gallery/template-gallery/). Download a `.tar.gz` from Github and open/expand it on your local computer.
 
-🏷 This buildpack is compatible with templates built for **PredictionIO version 0.9 & 0.10**. The appropriate version of PredictionIO will be automatically use based on the version declared in `template.json`.
+🏷 This buildpack should be used with engine templates for **PredictionIO 0.10**.
 
 ### Create an engine
 
@@ -89,7 +87,8 @@ git init
 ### Create a Heroku app for the engine
 
 ```bash
-heroku create $engine_name
+heroku create $ENGINE_NAME
+# Note the buildpacks differ for eventserver (above) & engine
 heroku buildpacks:add -i 1 https://github.com/heroku/heroku-buildpack-jvm-common.git
 heroku buildpacks:add -i 2 https://github.com/heroku/predictionio-buildpack.git
 ```
@@ -113,35 +112,41 @@ To enable, either:
 
 ### Create a PredictionIO app in the eventserver
 
+⚠️ **Not required for engines that exclusively use a custom data source.**
+
 ```bash
-heroku run "pio app new $pio_app_name" -a $eventserver_name
+heroku run "pio app new $PIO_APP_NAME" -a $EVENTSERVER_NAME
 ```
 
-* This returns an access key for the app; use it below in place of `$pio_app_access_key`.
+* This returns an access key for the app; use it below in place of `$PIO_APP_ACCESS_KEY`.
 
 ### Configure the Heroku app to use the eventserver
+
+⚠️ **Not required for engines that exclusively use a custom data source.**
 
 Replace the Postgres ID & eventserver config values with those from above:
 
 ```bash
-heroku addons:attach $postgres_addon_id
+heroku addons:attach $POSTGRES_ADDON_ID
 heroku config:set \
-  PIO_EVENTSERVER_HOSTNAME=$eventserver_name.herokuapp.com \
+  PIO_EVENTSERVER_HOSTNAME=$EVENTSERVER_NAME.herokuapp.com \
   PIO_EVENTSERVER_PORT=80 \
-  PIO_EVENTSERVER_ACCESS_KEY=$pio_app_access_key \
-  PIO_EVENTSERVER_APP_NAME=$pio_app_name
+  PIO_EVENTSERVER_ACCESS_KEY=$PIO_APP_ACCESS_KEY \
+  PIO_EVENTSERVER_APP_NAME=$PIO_APP_NAME
 ```
 
 * See [environment variables](#environment-variables) for config details.
 
 ### Update `engine.json`
 
+⚠️ **Not required for engines that exclusively use a custom data source.**
+
 Modify this file to make sure the `appName` parameter matches the app record [created in the eventserver](#generate-an-app-record-on-the-eventserver).
 
 ```json
   "datasource": {
     "params" : {
-      "appName": "$pio_app_name"
+      "appName": "$PIO_APP_NAME"
     }
   }
 ```
@@ -156,8 +161,8 @@ This step will vary based on the engine. Typically, a command formatted like the
 
 ```bash
 python ./data/import_eventserver.py \
-  --url https://$eventserver_name.herokuapp.com \
-  --access_key $pio_app_access_key
+  --url https://$EVENTSERVER_NAME.herokuapp.com \
+  --access_key $PIO_APP_ACCESS_KEY
 ```
 
 * check the engine's `data/` directory for exact naming & format.
@@ -169,7 +174,15 @@ python ./data/import_eventserver.py \
 git add .
 git commit -m "Initial PIO engine"
 git push heroku master
+
+# Follow the logs to see training 
+# and then start-up of the engine.
+#
+heroku logs -t --app $ENGINE_NAME
 ```
+
+⚠️ **Initial deploy will probably fail due to memory constraints.** To fix, [scale up](#scale-up) and [retry the release](#retry-release).
+
 
 ## Training
 
@@ -196,6 +209,11 @@ heroku ps:scale \
   release=0:Performance-L \
   train=0:Performance-L
 ```
+
+## Retry release
+
+When the release (`pio train`) fails due to memory constraints or other transient error, you may use the Heroku CLI [releases:retry plugin](https://github.com/heroku/heroku-releases-retry) to rerun the release without pushing a new deployment.
+
 
 ## Evaluation
 
@@ -271,12 +289,19 @@ Engine deployments honor the following config vars:
       PIO_SPARK_OPTS='--executor-memory 1536m --driver-memory 1g' \
       PIO_TRAIN_SPARK_OPTS='--executor-memory 10g --driver-memory 4g'
     ```
+  * example, using an existing Spark cluster (deploying a cluster is outside the scope of the buildpack):
+
+    ```bash
+    heroku config:set \
+      PIO_TRAIN_SPARK_OPTS='--master spark://my-master.example.com:7077' \
+      PIO_SPARK_OPTS='--master spark://my-master.example.com:7077'
+    ```
 * `PIO_EVENTSERVER_HOSTNAME`
-  * `$eventserver_name.herokuapp.com`
+  * `$EVENTSERVER_NAME.herokuapp.com`
 * `PIO_EVENTSERVER_PORT`
   * always `80` for Heroku apps
 * `PIO_EVENTSERVER_APP_NAME` & `PIO_EVENTSERVER_ACCESS_KEY`
-  * generated by running `pio app new $pio_app_name` on the eventserver
+  * generated by running `pio app new $PIO_APP_NAME` on the eventserver
 * `PIO_TRAIN_ON_RELEASE`
   * set `false` to disable automatic training
   * subsequent deploys will crash a deployed engine until it's retrained; use [manual training](#manual-training)

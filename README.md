@@ -1,237 +1,46 @@
-# PredictionIO classification app
+# [Heroku buildpack](https://devcenter.heroku.com/articles/buildpacks) for PredictionIO
 
-Predictive classification powered by [PredictionIO](https://predictionio.incubator.apache.org), machine learning on [Heroku](http://www.heroku.com).
+Enables data scientists and developers to deploy custom machine learning services created with [PredictionIO](https://predictionio.incubator.apache.org).
 
-This is a demo application of PredictionIO preset for simplified deployment. **Custom PredictionIO engines** may be deployed as well, see [CUSTOM documentation](CUSTOM.md).
+This buildpack is part of an exploration to simplify traditionally highly-customized data science operations using the [Heroku developer experience](https://www.heroku.com/dx). When considering this proof-of-concept technology, please note its [current limitations](#limitations). We'd love to hear from you. [Open issues on this repo](https://github.com/heroku/predictionio-buildpack/issues) with feedback and questions.
 
-Once deployed, this engine demonstrates prediction of the best fitting **service plan** for a **mobile phone user** based on their **voice, data, and text usage**. The model is trained with a small, example data set.
+## Engines
 
-## How To 📚
+Supports engines created for **PredictionIO 0.10.0-incubating**.
 
-✏️ Throughout this document, code terms that start with `$` represent a value (shell variable) that should be replaced with a customized value, e.g `$eventserver_name`, `$engine_name`, `$postgres_addon_id`…
+* [Classification demo](https://github.com/heroku/predictionio-engine-classification) presented at Dreamforce 2016. Implements Random Forests decision trees algorithm
+* [Template Gallery](https://predictionio.incubator.apache.org/gallery/template-gallery/) offers starting-points for many use-cases.
 
-### Deploy to Heroku
+🐸 **[How to deploy a template or custom engine](CUSTOM.md#engine)**
 
-Please follow steps in order.
+## Architecture
 
-1. [Requirements](#1-requirements)
-1. [Eventserver](#2-eventserver)
-  1. [Create the eventserver](#create-the-eventserver)
-  1. [Deploy the eventserver](#deploy-the-eventserver)
-1. [Classification engine](#3-classification-engine)
-  1. [Create the engine](#create-the-engine)
-  1. [Connect the engine with the eventserver](#connect-the-engine-with-the-eventserver)
-  1. [Import data](#import-data)
-  1. [Deploy the engine](#deploy-the-engine)
+This buildpack compiles the [Scala](http://www.scala-lang.org) source-code of a PredictionIO engine into a [Heroku app](https://devcenter.heroku.com/articles/how-heroku-works).
 
-### Usage
+![Diagram of Deployment to Heroku Common Runtime](http://marsikai.s3.amazonaws.com/predictionio-buildpack-arch-01.png)
 
-Once deployed, how to work with the engine.
+The events data can be stored in:
 
-* [Scale-up](#scale-up)
-* [Retry release](#retry-release)
-* 🎯 [Query for predictions](#query-for-predictions)
-* [Diagnostics](#diagnostics)
+* **PredictionIO Eventserver** backed by Heroku PostgreSQL
+  * directly compatible with most engine templates
+* **custom data store** such as Heroku Connect with PostgreSQL or RDD/DataFrames stored in HDFS
+  * requires a custom implementaion of `DataSource.scala`.
 
+## Limitations
 
-# Deploy to Heroku 🚀
+### Memory
 
-## 1. Requirements
+This buildpack automatically trains the predictive model during [release phase](https://devcenter.heroku.com/articles/release-phase), which runs in a [one-off dyno](https://devcenter.heroku.com/articles/dynos). That dyno's memory capacity is a limiting factor at this time. Only [Performance dynos](https://www.heroku.com/pricing) with 2.5GB or 14GB RAM provide reasonable utility. This limitation can be worked-around by pointing the engine at an existing Spark cluster. See: [customizing environment variables, `PIO_SPARK_OPTS` & `PIO_TRAIN_SPARK_OPTS`](CUSTOM.md#environment-variables).
 
-* [Heroku account](https://signup.heroku.com)
-* [Heroku CLI](https://toolbelt.heroku.com), command-line tools
-* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+### No Private Network
 
-## 2. Eventserver
+[Spark clusters](https://spark.apache.org/docs/1.6.2/spark-standalone.html) require a private network, so they cannot be deployed in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime). To operate in the Common Runtime this buildpack executes Spark as a sub-process (i.e. [`--master local`](https://spark.apache.org/docs/1.6.2/#running-the-examples-and-shell)) within [one-off and web dynos](https://devcenter.heroku.com/articles/dynos). This buildpack does support executing jobs on an existing Spark cluster. See: [customizing environment variables, `PIO_SPARK_OPTS` & `PIO_TRAIN_SPARK_OPTS`](CUSTOM.md#environment-variables).
 
-### Create the eventserver
+### Additional Service Dependencies
 
-```bash
-git clone \
-  https://github.com/heroku/predictionio-buildpack.git \
-  pio-eventserver
+[Elasticsearch](https://predictionio.incubator.apache.org/system/) [ES] is not currently supported on Heroku, because it's implemented using the ES native Client Transport which requires ES to be deployed on the same private network as the Engine. Therefore, [Heroku Postgres](https://www.heroku.com/postgres) is the default storage repository. *There is work underway in the PredictionIO project to support ES by upgrading to ES 5.x and migrating to pure-REST interface.*
 
-cd pio-eventserver
+### Stateless Builds
 
-heroku create $eventserver_name
-heroku addons:create heroku-postgresql:hobby-dev
-heroku buildpacks:add -i 1 https://github.com/heroku/predictionio-buildpack.git
-heroku buildpacks:add -i 2 heroku/scala
-```
-
-### Deploy the eventserver
-
-We delay deployment until the database is ready.
-
-```bash
-heroku pg:wait && git push heroku master
-```
-
-
-## 3. Classification Engine
-
-We'll be using a [classification engine for Heroku](https://github.com/heroku/predictionio-engine-classification) which implements [Spark's Random Forests algorithm](https://spark.apache.org/docs/1.6.2/mllib-ensembles.html) to predict a label using decision trees. See [A Visual Introduction to Machine Learning](http://www.r2d3.us/visual-intro-to-machine-learning-part-1/) to learn why decision trees are so effective.
-
-(Originally this engine implemented [Spark's Naive Bayes algorithm](https://spark.apache.org/docs/1.6.2/mllib-naive-bayes.html). We soon switched to Random Forests to improved results by correlating attributes, a well-known weakness of Naive Bayes. The Bayes algorithm is still available in the engine source.)
-
-### Create the engine
-
-```bash
-git clone \
-  https://github.com/heroku/predictionio-engine-classification.git \
-  pio-engine-classi
-
-cd pio-engine-classi
-
-heroku create $engine_name
-heroku buildpacks:add -i 1 https://github.com/heroku/heroku-buildpack-jvm-common.git
-heroku buildpacks:add -i 2 https://github.com/heroku/predictionio-buildpack.git
-```
-
-### Connect the engine with the eventserver
-
-First, collect a few configuration values.
-
-#### Get the eventserver's database add-on ID
-
-```bash
-heroku addons:info heroku-postgresql --app $eventserver_name
-#
-# Use the returned Postgres add-on ID
-# to attach it to the engine.
-# Example: `postgresql-aerodynamic-00000`
-#
-heroku addons:attach $postgres_addon_id --app $engine_name
-```
-
-#### Get an access key for this engine's data
-
-```bash
-heroku run 'pio app new classi' --app $eventserver_name
-#
-# Use the returned access key for `$pio_app_access_key`
-#
-heroku config:set \
-  PIO_EVENTSERVER_HOSTNAME=$eventserver_name.herokuapp.com \
-  PIO_EVENTSERVER_PORT=80 \
-  PIO_EVENTSERVER_ACCESS_KEY=$pio_app_access_key \
-  PIO_EVENTSERVER_APP_NAME=classi
-```
-
-### Import data
-
-🚨 Mandatory: data is required for training. The model cannot answer predictive queries until trained with data.
-
-When deployed, the engine will automatically train a model to predict the best fitting **service plan** for a **mobile phone user** based on their **voice, data, and text usage**. We'll use the engine's [example data and import script](https://github.com/heroku/predictionio-engine-classification/tree/master/data) for initial training.
-
-* `pip install predictionio` may be required before the import script will run; see [how-to install pip](https://pip.pypa.io/en/stable/installing/)
-
-```bash
-python ./data/import_eventserver.py \
-  --url https://$eventserver_name.herokuapp.com \
-  --access_key $pio_app_access_key
-```
-
-### Deploy the engine
-
-```bash
-git push heroku master
-
-# Follow the logs to see training 
-# and then start-up of the engine.
-#
-heroku logs -t --app $engine_name
-```
-
-⚠️ Initial deploy is likely to fail due to memory constraints. See [Scale up](#scale-up) in the next section. 
-
-# Usage ⌨️
-
-## Scale up
-
-Once deployed, scale up the processes and config Spark to avoid memory issues. These are paid, [professional dyno types](https://devcenter.heroku.com/articles/dyno-types#available-dyno-types):
-
-```bash
-heroku ps:scale \
-  web=1:Standard-2X \
-  release=0:Performance-L \
-  train=0:Performance-L \
-  --app $engine_name
-```
-
-## Retry release
-
-If the release (`pio train`) fails due to memory constraints or other transient error, you may use the Heroku CLI [releases:retry plugin](https://github.com/heroku/heroku-releases-retry) to rerun the release without pushing a new deployment.
-
-## Query for predictions
-
-Once deployment completes, the engine is ready to predict the best fitting **service plan** for a **mobile phone user** based on their **voice, data, and text usage**.
-
-Submit queries containing these three user attributes to get predictions using [Spark's Random Forests algorithm](https://spark.apache.org/docs/1.6.2/mllib-ensembles.html):
-
-```bash
-# Fits low usage, `0`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":12,\"data_usage\":0,\"text_usage\":4}"
-
-# Fits more voice, `1`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":480,\"data_usage\":0,\"text_usage\":121}"
-
-# Fits more data, `2`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":25,\"data_usage\":1000,\"text_usage\":80}"
-
-#Fits more texts, `3`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":5,\"data_usage\":80,\"text_usage\":1000}"
-
-#Extreme voice & data, `4`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":450,\"data_usage\":1104,\"text_usage\":43}"
-
-#Extreme data & text, `5`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":24,\"data_usage\":770,\"text_usage\":482}"
-
-#Extreme voice & text, `6`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":450,\"data_usage\":80,\"text_usage\":332}"
-
-#Everything equal / balanced usage, `7`
-curl -X "POST" "https://$engine_name.herokuapp.com/queries.json" \
-     -H "Content-Type: application/json; charset=utf-8" \
-     -d "{\"voice_usage\":450,\"data_usage\":432,\"text_usage\":390}"
-```
-
-For a production model, more aspects of a user account and their correlations might be taken into consideration, including: account type (individual, business, or family), frequency of roaming, international usage, device type (smart phone or feature phone), age of device, etc.
-
-
-## Diagnostics
-
-If you hit any snags with the engine serving queries, check the logs:
-
-```bash
-heroku logs -t --app $engine_name
-```
-
-If errors are occuring, sometimes a restart will help:
-
-```bash
-heroku restart --app $engine_name
-```
-
-
-# Going Deeper 🔬
-
-This is a sample application of PredictionIO, preset to get up-and-running quickly.
-
-**Custom PredictionIO engines** may be deployed with this buildpack too. See [CUSTOM documentation](CUSTOM.md) including: [training](CUSTOM.md#training), [evaluation](CUSTOM.md#evaluation), & [configuration](CUSTOM.md#configuration).
+PredictionIO 0.10.0-incubating requires a database connection during the build phase. While this works fine in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime), it is not compatible with [Private Databases](https://devcenter.heroku.com/articles/heroku-postgres-and-private-spaces). *There is work underway in the PredictionIO project to solve this problem by making `pio build` a stateless command.*
 
