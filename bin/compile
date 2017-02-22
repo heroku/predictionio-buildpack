@@ -65,6 +65,7 @@ BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
 export_env_dir "$ENV_DIR" '^PREDICTIONIO_DIST_URL$'
 export_env_dir "$ENV_DIR" '^PIO_BUILD_SPARK_VERSION$'
 SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.2}-bin-hadoop2.6"
+ELASTICSEARCH_DIST_URL=https://marsikai.s3.amazonaws.com/elasticsearch-2.4.4.tar.gz
 POSTGRESQL_DRIVER=https://marsikai.s3.amazonaws.com/postgresql-9.4.1209.jar
 
 if [ "${PREDICTIONIO_DIST_URL:-}" ]
@@ -101,10 +102,6 @@ app_namespace="pio-engine"
 app_prefix="/app/${app_namespace}"
 mkdir -p $app_prefix
 
-default_pio_env="config/pio-env.sh"
-custom_pio_env="$BUILD_DIR/config/pio-env.sh"
-target_pio_env="${dist_dir}/conf/pio-env.sh"
-
 topic "Fetch distribution of PredictionIO"
 curl -s -L "$url" > "${dist_name}.tar.gz"
 mkdir -p "$dist_dir"
@@ -115,7 +112,15 @@ curl -s -L "https://marsikai.s3.amazonaws.com/${SPARK_VERSION}.tar.gz" > "spark-
 mkdir -p "$dist_dir/vendors/spark-hadoop"
 tar -xz -f "spark-hadoop.tar.gz" -C "$dist_dir/vendors/spark-hadoop" --strip-components=1  | indent
 
+topic "Fetch distribution of ElasticSearch"
+curl -o "elasticsearch.tar.gz" -S "$ELASTICSEARCH_DIST_URL"
+mkdir -p "$dist_dir/vendors/elasticsearch"
+tar -xz -f "elasticsearch.tar.gz" -C "$dist_dir/vendors/elasticsearch" --strip-components=1  | indent
+
 topic "Configure PredictionIO"
+default_pio_env="$BP_DIR/config/pio-env.sh"
+custom_pio_env="$BUILD_DIR/config/pio-env.sh"
+target_pio_env="${dist_dir}/conf/pio-env.sh"
 if [ -f "${custom_pio_env}" ]
 then
   echo "Using custom 'config/pio-env.sh'" | indent
@@ -124,20 +129,50 @@ else
   echo "Writing default 'pio-env.sh'" | indent
   cp "${default_pio_env}" "${target_pio_env}" | indent
 fi
-cp "$BP_DIR/config/core-site.xml.erb" "$dist_dir/conf/"
+
+topic "Configure HDFS"
+default_core_site="$BP_DIR/config/core-site.xml.erb"
+custom_core_site="$BUILD_DIR/config/core-site.xml.erb"
+target_core_site="${dist_dir}/conf/core-site.xml.erb"
+if [ -f "${custom_core_site}" ]
+then
+  echo "Using custom 'config/core-site.xml.erb'" | indent
+  cp "${custom_core_site}" "${target_core_site}" | indent
+else
+  echo "Writing default 'core-site.xml.erb'" | indent
+  cp "${default_core_site}" "${target_core_site}" | indent
+fi
+
+topic "Configure ElasticSearch"
+default_elasticsearch="config/elasticsearch.yml.erb"
+custom_elasticsearch="$BUILD_DIR/config/elasticsearch.yml.erb"
+target_elasticsearch="${dist_dir}/conf/elasticsearch.yml.erb"
+if [ -f "${custom_elasticsearch}" ]
+then
+  echo "Using custom 'config/elasticsearch.yml.erb'" | indent
+  cp "${custom_elasticsearch}" "${target_elasticsearch}" | indent
+else
+  echo "Writing default 'elasticsearch.yml.erb'" | indent
+  cp "${default_elasticsearch}" "${target_elasticsearch}" | indent
+fi
 
 topic "Set-up PredictionIO environment"
 mkdir -p "$BUILD_DIR/.profile.d"
 cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
 # Load the env for the following build steps
-export_env_dir "$ENV_DIR" '^DATABASE_URL$'
+export_env_dir "$ENV_DIR" '^(DATABASE_URL|BONSAI_URL)$'
 source .profile.d/pio-path.sh
 
 if [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
-  # Move to dyno-compatible prefix for `pio build`
-  mv $BUILD_DIR/* $app_prefix
+  # Move the contets of the build directory
+  # to dyno-compatible prefix for `pio build`.
+  # Ignore the `pio-support/` directory, a stable
+  # path for other buildpacks to write files.
+  shopt -s extglob
+  mv $BUILD_DIR/!(pio-support) $app_prefix
+  shopt -u extglob
   cd $app_prefix
   #
   if [ -n "${PIO_VERBOSE:-}" ]
