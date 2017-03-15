@@ -66,7 +66,7 @@ Heroku [config vars](https://devcenter.heroku.com/articles/config-vars) solve ma
 
 ### Buildpack [![Build Status](https://travis-ci.org/heroku/predictionio-buildpack.svg?branch=master)](https://travis-ci.org/heroku/predictionio-buildpack)
 
-[Tests](test/) are composed and run using [heroku-buildpack-testrunner](https://github.com/heroku/heroku-buildpack-testrunner). Engine test cases are staged in the [`test/fixtures/`](test/fixtures/).
+[Tests](test/) covering this buildpack's build and release functionality are implemented with [heroku-buildpack-testrunner](https://github.com/heroku/heroku-buildpack-testrunner). Engine test cases are staged in the [`test/fixtures/`](test/fixtures/).
 
 Setup [testrunner with Docker](https://github.com/heroku/heroku-buildpack-testrunner#docker-usage), then run tests with:
 
@@ -76,4 +76,4 @@ docker-compose -p pio -f test/docker-compose.yml run testrunner
 
 ### Individual Apps
 
-Engines deployed as Heroku apps may automatically run their test suite using Heroku CI (private beta) within a [Pipeline](https://devcenter.heroku.com/articles/pipelines).
+Engines deployed as Heroku apps may automatically run their `sbt test` suite using Heroku CI (private beta) within a [Pipeline](https://devcenter.heroku.com/articles/pipelines).
