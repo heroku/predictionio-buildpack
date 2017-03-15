@@ -135,7 +135,7 @@ source .profile.d/pio-path.sh
 
 # Skip `pio build` for test runs
 # (`sbt test` performs the build itself)
-if [ "$IS_TEST_RUN" = "true" ]
+if [ "${IS_TEST_RUN:-}" = "true" ]
 then
   topic 'Continuing to run tests'
 
