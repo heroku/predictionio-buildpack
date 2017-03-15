@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# bin/test BUILD_DIR ENV_DIR
+
+cd $BUILD_DIR/pio-engine/
+./PredictionIO-dist/sbt/sbt test

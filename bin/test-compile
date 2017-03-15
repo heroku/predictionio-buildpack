@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# bin/test-compile BUILD_DIR CACHE_DIR ENV_DIR
+
+export IS_TEST_RUN=true
+./compile $@

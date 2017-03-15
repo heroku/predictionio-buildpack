@@ -105,12 +105,12 @@ default_pio_env="config/pio-env.sh"
 custom_pio_env="$BUILD_DIR/config/pio-env.sh"
 target_pio_env="${dist_dir}/conf/pio-env.sh"
 
-topic "Fetch distribution of PredictionIO"
+echo "Fetch distribution of PredictionIO" | indent
 curl -s -L "$url" > "${dist_name}.tar.gz"
 mkdir -p "$dist_dir"
 tar -xz -f "${dist_name}.tar.gz" -C "$dist_dir" --strip-components=1 | indent
 
-topic "Fetch distribution of Spark"
+echo "Fetch distribution of Spark" | indent
 curl -s -L "https://marsikai.s3.amazonaws.com/${SPARK_VERSION}.tar.gz" > "spark-hadoop.tar.gz"
 mkdir -p "$dist_dir/vendors/spark-hadoop"
 tar -xz -f "spark-hadoop.tar.gz" -C "$dist_dir/vendors/spark-hadoop" --strip-components=1  | indent
@@ -126,14 +126,21 @@ else
 fi
 cp "$BP_DIR/config/core-site.xml.erb" "$dist_dir/conf/"
 
-topic "Set-up PredictionIO environment"
+echo "Set-up runtime environment" | indent
 mkdir -p "$BUILD_DIR/.profile.d"
 cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
 # Load the env for the following build steps
 export_env_dir "$ENV_DIR" '^DATABASE_URL$'
 source .profile.d/pio-path.sh
 
-if [ -f "${BUILD_DIR}/engine.json" ]
+# Skip `pio build` for test runs
+# (`sbt test` performs the build itself)
+if [ "$IS_TEST_RUN" = "true" ]
+then
+  topic 'Continuing to run tests'
+
+# Perform `pio build` for the engine.
+elif [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
   # Move to dyno-compatible prefix for `pio build`
@@ -148,26 +155,28 @@ then
     $dist_name/bin/pio build | indent
   fi
 
-  topic "Clean-up build artifacts"
+  echo "Clean-up build artifacts" | indent
   # Try to keep slug below 300MB limit.
   # This is based on profiling with
   # `du -a "${BUILD_DIR}" | sort -n -r | head -n 50`
   # and removing big objects that seem unnecessary.
   rm -rf "target/streams" || true
 
-  topic "Moving build artifacts into place"
+  echo "Make build artifacts available in runtime" | indent
   # After PIO build at the runtime prefix, move the engine into the slug
   mv $app_prefix $BUILD_DIR
   # Move the Procfile(s) back to the top-level app directory or use default for engines
   # (`bin/release` default_process_types have no effect since this is never the last buildpack)
   if [ -f "${BUILD_DIR}/${app_namespace}/Procfile" ]
   then
+    echo "Using custom Procfile" | indent
     mv $BUILD_DIR/$app_namespace/Procfile* $BUILD_DIR
   else
+    echo "Using default Procfile for engine" | indent
     cp "${BP_DIR}/Procfile-engine" "${BUILD_DIR}/Procfile"
   fi
 
-  topic "Moving engine's bin/ & conf/ into place"
+  echo "Moving engine's bin/ & conf/ into place" | indent
   # This supports composition with other buildpacks which might expect 
   # bin/ & conf/ directories to stay in app/.
   mkdir -p $BUILD_DIR/$app_namespace/bin
@@ -175,17 +184,21 @@ then
   mkdir -p $BUILD_DIR/$app_namespace/conf
   mv $BUILD_DIR/$app_namespace/conf $BUILD_DIR/
 
-  topic "Set-up train on release (disable with PIO_TRAIN_ON_RELEASE=false)"
+  echo "Set-up train on release (disable with PIO_TRAIN_ON_RELEASE=false)" | indent
   mkdir -p "$BUILD_DIR/bin"
   cp $BP_DIR/bin/engine/heroku-* "$BUILD_DIR/bin/"
 
+# The eventserver is built directly by the Scala buildpack.
+# (heroku/scala must be the last buildpack defined for the app)
 else
   echo 'No engine to build. (`engine.json` does not exist.)' | indent
 fi
 
+topic 'Install supplemental drivers'
+
 if [ "$POSTGRESQL_DRIVER" ]
 then
-  topic "Install PostgreSQL database driver"
+  echo "+ PostgreSQL JDBC" | indent
   mkdir -p "${BUILD_DIR}/lib"
   curl -s -L "$POSTGRESQL_DRIVER" > "${BUILD_DIR}/lib/postgresql_jdbc.jar"
 fi
