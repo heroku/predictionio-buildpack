@@ -66,8 +66,6 @@ Heroku [config vars](https://devcenter.heroku.com/articles/config-vars) solve ma
 
 ### Buildpack [![Build Status](https://travis-ci.org/heroku/predictionio-buildpack.svg?branch=master)](https://travis-ci.org/heroku/predictionio-buildpack)
 
-### Buildpack [![Build Status](https://travis-ci.org/heroku/predictionio-buildpack.svg?branch=master)](https://travis-ci.org/heroku/predictionio-buildpack)
-
 [Tests](test/) covering this buildpack's build and release functionality are implemented with [heroku-buildpack-testrunner](https://github.com/heroku/heroku-buildpack-testrunner). Engine test cases are staged in the [`test/fixtures/`](test/fixtures/).
 
 Setup [testrunner with Docker](https://github.com/heroku/heroku-buildpack-testrunner#docker-usage), then run tests with:
