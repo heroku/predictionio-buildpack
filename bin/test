@@ -2,4 +2,12 @@
 
 # bin/test BUILD_DIR ENV_DIR
 
+PIO_ENV_FILE="conf/pio_env.test.sh"
+
+if [ -f "$PIO_ENV_FILE"]
+  # File that exports "pio_env.sh" values;
+  # for tests that require storage/database config.
+  # (Conditional, backward-compatibility from before tests required env config.)
+  then source $PIO_ENV_FILE
+fi
 cd "$1" && ./PredictionIO-dist/sbt/sbt test
