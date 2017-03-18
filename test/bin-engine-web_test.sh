@@ -113,50 +113,6 @@ test_web_params_with_spark_opts()
   assertEquals "" "$(cat ${STD_ERR})"
 }
 
-test_web_params_for_old_predictionio()
-{
-  export PORT=853211
-  mkdir -p .heroku
-  touch .heroku/.is_old_predictionio
-  
-  capture ${BUILDPACK_HOME}/bin/engine/heroku-buildpack-pio-web
-  assertEquals 0 ${rtrn}
-  assertEquals \
-    "deploy --port 853211 -- --driver-class-path /app/lib/postgresql_jdbc.jar" \
-    "$(cat ${STD_OUT})"
-  assertEquals "" "$(cat ${STD_ERR})"
-}
-
-test_web_params_for_old_predictionio_with_pio_opts()
-{
-  export PORT=853211
-  export PIO_OPTS='--variant best.json'
-  mkdir -p .heroku
-  touch .heroku/.is_old_predictionio
-  
-  capture ${BUILDPACK_HOME}/bin/engine/heroku-buildpack-pio-web
-  assertEquals 0 ${rtrn}
-  assertEquals \
-    "deploy --port 853211 --variant best.json -- --driver-class-path /app/lib/postgresql_jdbc.jar" \
-    "$(cat ${STD_OUT})"
-  assertEquals "" "$(cat ${STD_ERR})"
-}
-
-test_web_params_for_old_predictionio_with_spark_opts()
-{
-  export PORT=853211
-  export PIO_SPARK_OPTS='--master spark://localhost'
-  mkdir -p .heroku
-  touch .heroku/.is_old_predictionio
-  
-  capture ${BUILDPACK_HOME}/bin/engine/heroku-buildpack-pio-web
-  assertEquals 0 ${rtrn}
-  assertEquals \
-    "deploy --port 853211 -- --driver-class-path /app/lib/postgresql_jdbc.jar --master spark://localhost" \
-    "$(cat ${STD_OUT})"
-  assertEquals "" "$(cat ${STD_ERR})"
-}
-
 test_web_params_with_feedback_enabled()
 {
   export PORT=853211

@@ -13,11 +13,7 @@ SPARK_HOME=/app/pio-engine/PredictionIO-dist/vendors/spark-hadoop
 SPARK_LOCAL_IP="${HEROKU_PRIVATE_IP:-}"
 SPARK_PUBLIC_DNS="${HEROKU_DNS_DYNO_NAME:-}"
 
-
-if [ -e "/app/.heroku/.is_old_predictionio" ]
-then
-  POSTGRES_JDBC_DRIVER=/app/lib/postgresql_jdbc.jar
-fi
+POSTGRES_JDBC_DRIVER=/app/lib/postgresql_jdbc.jar
 
 # ES_CONF_DIR: You must configure this if you have advanced configuration for
 #              your Elasticsearch setup.

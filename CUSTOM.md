@@ -338,11 +338,3 @@ Check engine status:
 heroku run pio status
 ```
 
-#### Fix for database connectivity with PredictionIO 0.9.5
-
-`pio` commands that require DB access will need to have the driver specified as an argument (bug with PIO 0.9.5 + Spark 1.6.1):
-
-```bash
-pio $command -- --driver-class-path /app/lib/postgresql_jdbc.jar
-```
-

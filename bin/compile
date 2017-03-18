@@ -196,9 +196,6 @@ fi
 
 topic 'Install supplemental drivers'
 
-if [ "$POSTGRESQL_DRIVER" ]
-then
-  echo "+ PostgreSQL JDBC" | indent
-  mkdir -p "${BUILD_DIR}/lib"
-  curl -s -L "$POSTGRESQL_DRIVER" > "${BUILD_DIR}/lib/postgresql_jdbc.jar"
-fi
+echo "+ PostgreSQL JDBC" | indent
+mkdir -p "${BUILD_DIR}/lib"
+curl -s -L "$POSTGRESQL_DRIVER" > "${BUILD_DIR}/lib/postgresql_jdbc.jar"

@@ -29,10 +29,4 @@ then
   S3_SUPPORT_OPTS="--packages org.apache.hadoop:hadoop-aws:2.7.2"
 fi
 
-# Start the web process; pre-Apache (v0.9) vs Apache (>= v0.10) compatibility.
-if [ -e ".heroku/.is_old_predictionio" ]
-then
-  eval "cd pio-engine/ && pio deploy --port $PORT ${PIO_OPTS:-} ${FEEDBACK_OPTS:-} -- --driver-class-path /app/lib/postgresql_jdbc.jar ${PIO_SPARK_OPTS:-}"
-else
-  eval "cd pio-engine/ && pio deploy --port $PORT ${PIO_OPTS:-} ${FEEDBACK_OPTS:-} -- ${PIO_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"
-fi
+eval "cd pio-engine/ && pio deploy --port $PORT ${PIO_OPTS:-} ${FEEDBACK_OPTS:-} -- ${PIO_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"
