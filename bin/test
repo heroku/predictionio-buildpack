@@ -4,10 +4,10 @@
 
 PIO_ENV_FILE="conf/pio_env.test.sh"
 
+# Tests environment config for PredictionIO; "pio_env.sh" for tests.
 if [ -f "$PIO_ENV_FILE"]
-  # File that exports "pio_env.sh" values;
-  # for tests that require storage/database config.
-  # (Conditional, backward-compatibility from before tests required env config.)
-  then source $PIO_ENV_FILE
+  then
+  echo "       Loading environment from '$PIO_ENV_FILE'"
+  source $PIO_ENV_FILE
 fi
 cd "$1" && ./PredictionIO-dist/sbt/sbt test

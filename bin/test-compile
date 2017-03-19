@@ -2,4 +2,4 @@
 
 # bin/test-compile BUILD_DIR CACHE_DIR ENV_DIR
 
-IS_TEST_RUN=true "$(dirname ${0:-})/compile" "$1" "$2" "$3"
+PIO_IS_TEST_RUN=true "$(dirname ${0:-})/compile" "$1" "$2" "$3"

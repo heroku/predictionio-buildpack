@@ -130,12 +130,12 @@ echo "Set-up runtime environment" | indent
 mkdir -p "$BUILD_DIR/.profile.d"
 cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
 # Load the env for the following build steps
-export_env_dir "$ENV_DIR" '^DATABASE_URL$'
+export_env_dir "$ENV_DIR" '^(PIO_\w+|DATABASE_URL)$'
 source .profile.d/pio-path.sh
 
 # Skip `pio build` for test runs
 # (`sbt test` performs the build itself)
-if [ "${IS_TEST_RUN:-}" = "true" ]
+if [ "${PIO_IS_TEST_RUN:-}" = "true" ]
 then
   topic 'Continuing to run tests'
 
