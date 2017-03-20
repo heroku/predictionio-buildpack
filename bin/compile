@@ -139,6 +139,11 @@ if [ "${PIO_IS_TEST_RUN:-}" = "true" ]
 then
   topic 'Continuing to run tests'
 
+  # Workaround for missing log4j config during `sbt test`
+  echo "Configure logging for test env" | indent
+  cp $dist_dir/conf/log4j.properties \
+     $dist_dir/vendors/spark-hadoop/conf/log4j.properties
+
 # Perform `pio build` for the engine.
 elif [ -f "${BUILD_DIR}/engine.json" ]
 then
