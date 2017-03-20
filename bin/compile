@@ -137,10 +137,19 @@ if [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
   # Move to dyno-compatible prefix for `pio build`
-  mv $BUILD_DIR/* $app_prefix
+  if [ "$(pwd)" = "/app" ]
+    then
+    # tests are built in a runtime-like root
+    mv $BUILD_DIR/* $dist_name/
+  else
+    # normal app build is in a random tmpdir
+    mv $BUILD_DIR/* $app_prefix
+  fi
+
+  # Perfom the build inside `/app/pio-engine`
   cd $app_prefix
-  #
-  if [ -n "${PIO_VERBOSE:-}" ]
+
+  if [ "${PIO_VERBOSE:-}" = "true" ]
   then
     $dist_name/bin/pio build --verbose | indent
   else
