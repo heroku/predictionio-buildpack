@@ -2,7 +2,7 @@
 
 # bin/test BUILD_DIR ENV_DIR
 
-PIO_ENV_FILE="conf/pio_env.test.sh"
+PIO_ENV_FILE="$1/conf/pio_env.test.sh"
 
 # Tests environment config for PredictionIO; "pio_env.sh" for tests.
 if [ -f "$PIO_ENV_FILE"]

@@ -2,4 +2,12 @@
 
 # bin/test-compile BUILD_DIR CACHE_DIR ENV_DIR
 
+PIO_ENV_FILE="$1/conf/pio_env.test.sh"
+
+# Tests environment config for PredictionIO; "pio_env.sh" for tests.
+if [ -f "$PIO_ENV_FILE" ]
+  then
+  echo "       Loading environment from '$PIO_ENV_FILE'"
+  source $PIO_ENV_FILE
+fi
 PIO_IS_TEST_RUN=true "$(dirname ${0:-})/compile" "$1" "$2" "$3"
