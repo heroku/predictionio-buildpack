@@ -7,7 +7,6 @@ test_compile_with_defaults() {
 
   unset PREDICTIONIO_DIST_URL
   unset PIO_BUILD_SPARK_VERSION
-  unset PIO_IS_TEST_RUN
 
   compile
 
@@ -53,7 +52,6 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
   # until the "stateless build" feature is available in a release.
   export PREDICTIONIO_DIST_URL="https://marsikai.s3.amazonaws.com/PredictionIO-0.11.0-cb14625.tar.gz"
   unset PIO_BUILD_SPARK_VERSION
-  unset PIO_IS_TEST_RUN
 
   compile
 
@@ -83,18 +81,4 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
   assertContains "Model Data Backend (Source: PGSQL)" "$(cat ${STD_OUT})"
   assertContains "Event Data Backend (Source: PGSQL)" "$(cat ${STD_OUT})"
   assertContains "Your system is all ready to go" "$(cat ${STD_OUT})"
-}
-
-test_compile_for_tests() {
-  ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0"
-  cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
-
-  unset PREDICTIONIO_DIST_URL
-  unset PIO_BUILD_SPARK_VERSION
-  export PIO_IS_TEST_RUN=true
-
-  compile
-
-  assertEquals "\`pio build\` exit code was ${RETURN} instead of 0" "0" "${RETURN}"
-  assertContains "Continuing to run tests" "$(cat ${STD_OUT})"
 }

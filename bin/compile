@@ -133,22 +133,7 @@ cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
 export_env_dir "$ENV_DIR" '^(PIO_\w+|DATABASE_URL)$'
 source .profile.d/pio-path.sh
 
-# Skip `pio build` for test runs
-# (`sbt test` performs the build itself)
-if [ "${PIO_IS_TEST_RUN:-}" = "true" ]
-then
-  topic 'Continuing to run tests'
-
-  # Workaround for missing log4j config during `sbt test`
-  echo "Configure logging for test env" | indent
-  cp $dist_dir/conf/log4j.properties \
-     $dist_dir/vendors/spark-hadoop/conf/log4j.properties
-
-  echo "Allow test environment to override 'pio_env.sh'" | indent
-  rm $target_pio_env
-
-# Perform `pio build` for the engine.
-elif [ -f "${BUILD_DIR}/engine.json" ]
+if [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
   # Move to dyno-compatible prefix for `pio build`

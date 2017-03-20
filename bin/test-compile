@@ -10,4 +10,4 @@ if [ -f "$PIO_ENV_FILE" ]
   echo "       Loading environment from '$PIO_ENV_FILE'"
   source $PIO_ENV_FILE
 fi
-PIO_IS_TEST_RUN=true "$(dirname ${0:-})/compile" "$1" "$2" "$3"
+eval "$(dirname ${0:-})/compile $1 $2 $3"

@@ -10,4 +10,4 @@ if [ -f "$PIO_ENV_FILE"]
   echo "       Loading environment from '$PIO_ENV_FILE'"
   source $PIO_ENV_FILE
 fi
-cd "$1" && ./PredictionIO-dist/sbt/sbt test
+cd "$1/pio-engine" && ./PredictionIO-dist/sbt/sbt test
