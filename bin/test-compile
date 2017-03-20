@@ -11,3 +11,6 @@ if [ -f "$PIO_ENV_FILE" ]
   source $PIO_ENV_FILE
 fi
 eval "$(dirname ${0:-})/compile $1 $2 $3"
+
+echo "       Removing 'pio_env.sh' to override with test environment"
+rm "$1/pio-engine/PredictionIO-dist/conf/pio-env.sh"

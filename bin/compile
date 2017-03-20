@@ -99,7 +99,6 @@ dist_dir="$BUILD_DIR/$dist_name"
 # to align with the actual runtime.)
 app_namespace="pio-engine"
 app_prefix="/app/${app_namespace}"
-mkdir -p $app_prefix
 
 default_pio_env="config/pio-env.sh"
 custom_pio_env="$BUILD_DIR/config/pio-env.sh"
@@ -136,17 +135,19 @@ source .profile.d/pio-path.sh
 if [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
-  # Move to dyno-compatible prefix for `pio build`
-  if [ "$(pwd)" = "/app" ]
-    then
-    # tests are built in a runtime-like root
-    mv $BUILD_DIR/* $dist_name/
-  else
-    # normal app build is in a random tmpdir
-    mv $BUILD_DIR/* $app_prefix
-  fi
 
-  # Perfom the build inside `/app/pio-engine`
+  echo "Current/buildpack dir: $(pwd)" | indent
+  echo "Build dir: $BUILD_DIR" | indent
+  echo "Cache dir: $CACHE_DIR" | indent
+
+  # Move to dyno-runtime-compatible prefix for `pio build`
+  echo "Move to $app_prefix for 'pio build'" | indent
+  STAGE_THE_BUILD=$CACHE_DIR/app-prefix-stage
+  mkdir -p $STAGE_THE_BUILD
+  mv $BUILD_DIR/* $STAGE_THE_BUILD/
+  mkdir -p $app_prefix
+  mv $STAGE_THE_BUILD/* $app_prefix/
+  rm -rf $STAGE_THE_BUILD
   cd $app_prefix
 
   if [ "${PIO_VERBOSE:-}" = "true" ]
@@ -166,7 +167,7 @@ then
 
   echo "Make build artifacts available in runtime" | indent
   # After PIO build at the runtime prefix, move the engine into the slug
-  mv $app_prefix $BUILD_DIR
+  mv $app_prefix $BUILD_DIR || true
   # Move the Procfile(s) back to the top-level app directory or use default for engines
   # (`bin/release` default_process_types have no effect since this is never the last buildpack)
   if [ -f "${BUILD_DIR}/${app_namespace}/Procfile" ]
