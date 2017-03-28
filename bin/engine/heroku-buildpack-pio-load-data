@@ -11,27 +11,14 @@ set -u
 
 APP_PREFIX="/app/pio-engine"
 BIN_PATH="/app/bin" # because compile script moves bin/ up to app/
+FETCH_DATA_SCRIPT="data/create-initial-events"
+FETCH_DATA_SCRIPTPATH="$APP_PREFIX/$FETCH_DATA_SCRIPT"
 IMPORT_DATA_FILE="data/initial-events.json"
 IMPORT_DATA_FILEPATH="$APP_PREFIX/$IMPORT_DATA_FILE"
 
-# If it's declared, run the custom data loader script and then exit.
-if [ -n "${PIO_LOAD_DATA_SCRIPT:-}" ]
+if [ -f "$FETCH_DATA_SCRIPTPATH" ] || [ -f "$IMPORT_DATA_FILEPATH" ]
 then
-  SCRIPT_PATH="$BIN_PATH/$PIO_LOAD_DATA_SCRIPT"
-  if [ -f "$SCRIPT_PATH" ]
-  then
-    echo "Loading data using script '$PIO_LOAD_DATA_SCRIPT'."
-    eval "$SCRIPT_PATH"
-    exit $?
-  else
-    echo "Data loader script '$PIO_LOAD_DATA_SCRIPT' does not exist; tried '$SCRIPT_PATH'."
-    exit 1
-  fi
-fi
-
-if [ -f "$IMPORT_DATA_FILEPATH" ]
-then
-  echo "Found '$IMPORT_DATA_FILE'. Loading data…"
+  echo "Loading event data…"
 
   # Verify required env variables are set.
   if [ -z "$DATABASE_URL" ]
@@ -63,6 +50,18 @@ then
       # Exit code 3, so that release phase can detect and exit cleanly, 
       # to then retry after a key is set.
       exit 3
+    fi
+
+    if [ -f "$FETCH_DATA_SCRIPTPATH" ]
+      then
+      echo "Fetching data using script '$FETCH_DATA_SCRIPT'."
+      eval "$FETCH_DATA_SCRIPTPATH"
+
+      if [ ! -f "$IMPORT_DATA_FILEPATH" ]
+        then
+        echo "Error loading event data: '$FETCH_DATA_SCRIPT' did not produce the required output file '$IMPORT_DATA_FILE'."
+        exit 1
+      fi
     fi
     
     echo "Creating '$PIO_EVENTSERVER_APP_NAME' in the eventserver"
