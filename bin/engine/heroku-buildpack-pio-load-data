@@ -57,6 +57,9 @@ then
       echo "Fetching data using script '$FETCH_DATA_SCRIPT'."
       eval "$FETCH_DATA_SCRIPTPATH"
 
+      # Move the output file into the pio-engine/ prefix
+      mv /app/$IMPORT_DATA_FILE $IMPORT_DATA_FILEPATH || true
+
       if [ ! -f "$IMPORT_DATA_FILEPATH" ]
         then
         echo "Error loading event data: '$FETCH_DATA_SCRIPT' did not produce the required output file '$IMPORT_DATA_FILE'."
