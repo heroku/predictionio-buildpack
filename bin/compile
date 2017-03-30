@@ -64,7 +64,8 @@ BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
 
 export_env_dir "$ENV_DIR" '^PREDICTIONIO_DIST_URL$'
 export_env_dir "$ENV_DIR" '^PIO_BUILD_SPARK_VERSION$'
-SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.3}-bin-hadoop2.6"
+export_env_dir "$ENV_DIR" '^PIO_BUILD_HADOOP_VERSION$'
+SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.3}-bin-hadoop${PIO_BUILD_HADOOP_VERSION:-2.6}"
 POSTGRESQL_DRIVER=https://marsikai.s3.amazonaws.com/postgresql-9.4.1209.jar
 
 if [ "${PREDICTIONIO_DIST_URL:-}" ]
@@ -104,12 +105,12 @@ default_pio_env="config/pio-env.sh"
 custom_pio_env="$BUILD_DIR/config/pio-env.sh"
 target_pio_env="${dist_dir}/conf/pio-env.sh"
 
-echo "Fetch distribution of PredictionIO" | indent
+echo "Fetch distribution of PredictionIO (${PIO_VERSION})" | indent
 curl -s -L "$url" > "${dist_name}.tar.gz"
 mkdir -p "$dist_dir"
 tar -xz -f "${dist_name}.tar.gz" -C "$dist_dir" --strip-components=1 | indent
 
-echo "Fetch distribution of Spark" | indent
+echo "Fetch distribution of Spark (${SPARK_VERSION})" | indent
 curl -s -L "https://marsikai.s3.amazonaws.com/${SPARK_VERSION}.tar.gz" > "spark-hadoop.tar.gz"
 mkdir -p "$dist_dir/vendors/spark-hadoop"
 tar -xz -f "spark-hadoop.tar.gz" -C "$dist_dir/vendors/spark-hadoop" --strip-components=1  | indent
