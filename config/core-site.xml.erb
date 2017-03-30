@@ -4,20 +4,20 @@
 <configuration>
 <% if ENV["PIO_S3_BUCKET_NAME"] %>
         <property>
-                <name>fs.s3n.impl</name>
-                <value>org.apache.hadoop.fs.s3native.NativeS3FileSystem</value>
-                <description>The FileSystem for s3n: (Native S3) uris.</description>
+                <name>fs.s3a.impl</name>
+                <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+                <description>The implementation class of the S3A Filesystem</description>
         </property>
         <property>
                 <name>fs.defaultFS</name>
-                <value>s3n://<%= ENV["PIO_S3_BUCKET_NAME"] %></value>
+                <value>s3a://<%= ENV["PIO_S3_BUCKET_NAME"] %></value>
         </property>
         <property>
-                <name>fs.s3n.awsAccessKeyId</name>
+                <name>fs.s3a.access.key</name>
                 <value><%= ENV["PIO_S3_AWS_ACCESS_KEY_ID"] %></value>
         </property>
         <property>
-                <name>fs.s3n.awsSecretAccessKey</name>
+                <name>fs.s3a.secret.key</name>
                 <value><%= ENV["PIO_S3_AWS_SECRET_ACCESS_KEY"] %></value>
         </property>
 <% end %>
