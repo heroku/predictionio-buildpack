@@ -48,9 +48,9 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
   ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0"
   cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
 
-  # Use the develop branch (0.11.0-SNAPSHOT) as of February 16, 2017,
+  # Use the develop branch (0.11.0-SNAPSHOT) as of March 30, 2017,
   # until the "stateless build" feature is available in a release.
-  export PREDICTIONIO_DIST_URL="https://marsikai.s3.amazonaws.com/PredictionIO-0.11.0-cb14625.tar.gz"
+  export PREDICTIONIO_DIST_URL="https://marsikai.s3.amazonaws.com/PredictionIO-0.11.0-23a86932.tar.gz"
   unset PIO_BUILD_SPARK_VERSION
 
   compile
