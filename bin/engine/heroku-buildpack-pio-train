@@ -11,4 +11,6 @@ then
   S3_SUPPORT_OPTS="--packages org.apache.hadoop:hadoop-aws:2.7.2"
 fi
 
-eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"
+# Skip S3 hack for 0.11.0?
+# eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"
+eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-}"

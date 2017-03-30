@@ -82,7 +82,9 @@ then
     fi
 
     echo "Importing events for training to App ID $EVENTSERVER_APP_ID"
-    eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
+    # Skip S3 hack for 0.11.0?
+    #eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
+    eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH"
   else
     set -e
     echo "Found '$PIO_EVENTSERVER_APP_NAME' in the eventserver. Skipping initialization and data load."
