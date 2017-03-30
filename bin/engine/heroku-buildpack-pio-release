@@ -9,27 +9,27 @@ set -u
 # Debug, echo every command
 #set -x
 
+# Try to load data.
+set +e
+bin/heroku-buildpack-pio-load-data
+LOAD_DATA_STATUS=$?
+# Handle exit code from data loader.
+if [ $LOAD_DATA_STATUS -eq 3 ]
+then
+  # Translate exit 3 from data loader to mean "exit ok".
+  # This is a soft error that continues the release, but 
+  # needs config vars & addons to be setup to retry.
+  >&2 echo 'Transient error loading data. Skipping train on release.'
+  exit
+elif [ $LOAD_DATA_STATUS -gt 0 ]
+then
+  # All other exits codes fail.
+  >&2 echo 'Error loading data.'
+  exit $LOAD_DATA_STATUS
+fi
+
 if [ "${PIO_TRAIN_ON_RELEASE-true}" != "false" ]
 then
-  # Try to load data.
-  set +e
-  bin/heroku-buildpack-pio-load-data
-  LOAD_DATA_STATUS=$?
-  # Handle exit code from data loader.
-  if [ $LOAD_DATA_STATUS -eq 3 ]
-  then
-    # Translate exit 3 from data loader to mean "exit ok".
-    # This is a soft error that continues the release, but 
-    # needs config vars & addons to be setup to retry.
-    >&2 echo 'Transient error loading data. Skipping train on release.'
-    exit
-  elif [ $LOAD_DATA_STATUS -gt 0 ]
-  then
-    # All other exits codes fail.
-    >&2 echo 'Error loading data.'
-    exit $LOAD_DATA_STATUS
-  fi
-
   echo 'Running train on release…'
   # Fail immediately on non-zero exit code.
   set -e
