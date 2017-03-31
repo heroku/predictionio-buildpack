@@ -139,10 +139,6 @@ if [ -f "${BUILD_DIR}/engine.json" ]
 then
   topic "Build PredictionIO engine"
 
-  echo "Current/buildpack dir: $(pwd)" | indent
-  echo "Build dir: $BUILD_DIR" | indent
-  echo "Cache dir: $CACHE_DIR" | indent
-
   # Move to dyno-runtime-compatible prefix for `pio build`
   echo "Move to $app_prefix for 'pio build'" | indent
   STAGE_THE_BUILD=$CACHE_DIR/app-prefix-stage
@@ -152,6 +148,12 @@ then
   mv $STAGE_THE_BUILD/* $app_prefix/
   rm -rf $STAGE_THE_BUILD
   cd $app_prefix
+
+  echo "Enable local Maven repo" | indent
+  mv $BP_DIR/repo .
+  (echo && \
+    echo '// Search for packages provided by predictionio-buildpack' && \
+    echo 'resolvers += "Local Maven Repository" at "file://"+baseDirectory.value+"/repo"') >> build.sbt
 
   if [ "${PIO_VERBOSE:-}" = "true" ]
   then
