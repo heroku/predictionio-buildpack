@@ -67,6 +67,8 @@ export_env_dir "$ENV_DIR" '^PIO_BUILD_SPARK_VERSION$'
 export_env_dir "$ENV_DIR" '^PIO_BUILD_HADOOP_VERSION$'
 SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.3}-bin-hadoop${PIO_BUILD_HADOOP_VERSION:-2.6}"
 POSTGRESQL_DRIVER=https://marsikai.s3.amazonaws.com/postgresql-9.4.1209.jar
+HADOOP_AWS_SUPPORT=https://marsikai.s3.amazonaws.com/hadoop-aws-2.7.3.jar
+AWS_SDK=https://marsikai.s3.amazonaws.com/aws-java-sdk-1.7.4.jar
 
 if [ "${PREDICTIONIO_DIST_URL:-}" ]
 then
@@ -166,7 +168,7 @@ then
   # and removing big objects that seem unnecessary.
   rm -rf "target/streams" || true
 
-  echo "Make build artifacts available in runtime" | indent
+  echo "Making engine available in runtime at /app/pio-engine/" | indent
   # After PIO build at the runtime prefix, move the engine into the slug
   mv $app_prefix $BUILD_DIR || true
   # Move the Procfile(s) back to the top-level app directory or use default for engines
@@ -180,7 +182,7 @@ then
     cp "${BP_DIR}/Procfile-engine" "${BUILD_DIR}/Procfile"
   fi
 
-  echo "Moving engine's bin/ & conf/ into place" | indent
+  echo "Moving engine's bin/ & conf/ up to /app/" | indent
   # This supports composition with other buildpacks which might expect 
   # bin/ & conf/ directories to stay in app/.
   mkdir -p $BUILD_DIR/$app_namespace/bin
@@ -200,6 +202,16 @@ fi
 
 topic 'Install supplemental drivers'
 
-echo "+ PostgreSQL JDBC" | indent
+echo "+ PostgreSQL (JDBC)" | indent
 mkdir -p "${BUILD_DIR}/lib"
 curl -s -L "$POSTGRESQL_DRIVER" > "${BUILD_DIR}/lib/postgresql_jdbc.jar"
+
+if [ -d "$BUILD_DIR/pio-engine" ]
+  then
+  SPARK_LIB=$BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark
+  mkdir -p $SPARK_LIB
+  echo "+ S3 HDFS (AWS SDK)" | indent
+  curl -s -L "$AWS_SDK" > "$SPARK_LIB/aws-java-sdk.jar"
+  echo "+ S3 HDFS (Hadoop-AWS)" | indent
+  curl -s -L "$HADOOP_AWS_SUPPORT" > "$SPARK_LIB/hadoop-aws.jar"
+fi
