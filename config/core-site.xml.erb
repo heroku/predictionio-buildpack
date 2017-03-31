@@ -20,5 +20,11 @@
                 <name>fs.s3a.secret.key</name>
                 <value><%= ENV["PIO_S3_AWS_SECRET_ACCESS_KEY"] %></value>
         </property>
+        <% if ENV["AWS_REGION"] %>
+        <property>
+                <name>fs.s3a.endpoint</name>
+                <value><%= "s3-#{ ENV["AWS_REGION"] }.amazonaws.com" %></value>
+        </property>
+        <% end %>
 <% end %>
 </configuration>

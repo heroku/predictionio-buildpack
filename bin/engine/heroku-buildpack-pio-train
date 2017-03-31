@@ -3,14 +3,10 @@
 # Fail immediately on non-zero exit code.
 set -e
 
-# Optionally enable S3 HDFS support.
-if [ -n "$PIO_S3_BUCKET_NAME" -a -n "$PIO_S3_AWS_ACCESS_KEY_ID" -a -n "$PIO_S3_AWS_SECRET_ACCESS_KEY" ]
+# Enable S3 HDFS support for newer regions.
+if [ -n "$AWS_REGION" ]
 then
-  # Installing a package at runtime is a total hack;
-  # anticipating that Spark 2+ & Hadoop 2.7+ will fix.
-  S3_SUPPORT_OPTS="--packages org.apache.hadoop:hadoop-aws:2.7.2"
+  S3_SUPPORT_OPTS="--conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
 fi
 
-# Skip S3 hack for 0.11.0?
-# eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"
-eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-}"
+eval "cd pio-engine/ && pio train ${PIO_OPTS:-} -- ${PIO_TRAIN_SPARK_OPTS:-} ${S3_SUPPORT_OPTS:-}"

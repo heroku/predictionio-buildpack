@@ -73,18 +73,14 @@ then
     # Capture the new App ID
     EVENTSERVER_APP_ID=`cat app-new-out.log | ruby -E utf-8:utf-8 -e 'STDOUT << /id:\s+(\w+)/i.match(STDIN.read)[1]'`
 
-    # Optionally enable S3 HDFS support.
-    if [ -n "$PIO_S3_BUCKET_NAME" -a -n "$PIO_S3_AWS_ACCESS_KEY_ID" -a -n "$PIO_S3_AWS_SECRET_ACCESS_KEY" ]
+    # Enable S3 HDFS support for newer regions.
+    if [ -n "$AWS_REGION" ]
     then
-      # Installing a package at runtime is a total hack;
-      # anticipating that Spark 2+ & Hadoop 2.7+ will fix.
-      S3_SUPPORT_OPTS="--packages org.apache.hadoop:hadoop-aws:2.7.2"
+      S3_SUPPORT_OPTS="--conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
     fi
 
     echo "Importing events for training to App ID $EVENTSERVER_APP_ID"
-    # Skip S3 hack for 0.11.0?
-    #eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
-    eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH"
+    eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
   else
     set -e
     echo "Found '$PIO_EVENTSERVER_APP_NAME' in the eventserver. Skipping initialization and data load."

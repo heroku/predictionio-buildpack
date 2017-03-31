@@ -322,6 +322,8 @@ Engine deployments honor the following config vars:
   * use [manual training](#manual-training)
 * `PIO_S3_BUCKET_NAME`, `PIO_S3_AWS_ACCESS_KEY_ID`, & `PIO_S3_AWS_SECRET_ACCESS_KEY`
   * configures a bucket to enable filesystem access
+* `AWS_REGION`
+  * when connecting to S3 in region other than US, the region name must be specified to enable signature v4.
 
 ## Running commands
 
