@@ -277,6 +277,9 @@ Engine deployments honor the following config vars:
 * `PIO_BUILD_HADOOP_VERSION`
   * default `2.6`
   * supports `2.6` & `2.7` (only with Spark `2.1.0`)
+* `PIO_MAVEN_REPO`
+  * add a Maven repository URL to search when installing deps from engine's `build.sbt`
+  * useful for testing pre-release packages
 * `PREDICTIONIO_DIST_URL`
   * defaults to a PredictionIO distribution version based on `pio.version.min` in **template.json**
   * use a custom distribution by setting its fetch URL:

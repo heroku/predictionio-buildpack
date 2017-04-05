@@ -152,11 +152,22 @@ then
   rm -rf $STAGE_THE_BUILD
   cd $app_prefix
 
-  echo "Enable local Maven repo" | indent
-  mv $BP_DIR/repo .
-  (echo && \
-    echo '// Search for packages provided by predictionio-buildpack' && \
-    echo 'resolvers += "Local Maven Repository" at "file://"+baseDirectory.value+"/repo"') >> build.sbt
+  if [ "${PIO_MAVEN_REPO:-}" ]
+    then
+    echo "Enable custom Maven repo" | indent
+    (echo && \
+      echo '// Search for packages in custom repo via predictionio-buildpack' && \
+      echo "resolvers += \"Custom Repository via PIO_MAVEN_REPO\" at \"$PIO_MAVEN_REPO\"") >> build.sbt
+  fi
+
+  if [ -d "$BP_DIR/repo" ]
+    then
+    echo "Enable local Maven repo" | indent
+    cp -r $BP_DIR/repo .
+    (echo && \
+      echo '// Search for packages provided by predictionio-buildpack' && \
+      echo 'resolvers += "Local Repository" at "file://"+baseDirectory.value+"/repo"') >> build.sbt
+  fi
 
   if [ "${PIO_VERBOSE:-}" = "true" ]
   then
