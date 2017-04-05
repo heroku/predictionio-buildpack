@@ -12,7 +12,9 @@ test_compile_with_defaults() {
 
   assertEquals "\`pio build\` exit code was ${RETURN} instead of 0" "0" "${RETURN}"
   assertTrue "missing Procfile" "[ -f $BUILD_DIR/Procfile ]"
-  assertTrue "missing PostgreSQL driver" "[ -f $BUILD_DIR/lib/postgresql_jdbc.jar ]"
+  assertTrue "missing PostgreSQL JDBC" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/postgresql_jdbc.jar ]"
+  assertTrue "missing AWS SDK" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark/aws-java-sdk.jar ]"
+  assertTrue "missing Hadoop-AWS" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark/hadoop-aws.jar ]"
   assertTrue "missing runtime memory config" "[ -f $BUILD_DIR/.profile.d/pio-memory.sh ]"
   assertTrue "missing runtime path config" "[ -f $BUILD_DIR/.profile.d/pio-path.sh ]"
   assertTrue "missing runtime config renderer" "[ -f $BUILD_DIR/.profile.d/pio-render-configs.sh ]"
@@ -57,7 +59,9 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
 
   assertEquals "\`pio build\` exit code was ${RETURN} instead of 0" "0" "${RETURN}"
   assertTrue "missing Procfile" "[ -f $BUILD_DIR/Procfile ]"
-  assertTrue "missing PostgreSQL driver" "[ -f $BUILD_DIR/lib/postgresql_jdbc.jar ]"
+  assertTrue "missing PostgreSQL JDBC" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/postgresql_jdbc.jar ]"
+  assertTrue "missing AWS SDK" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark/aws-java-sdk.jar ]"
+  assertTrue "missing Hadoop-AWS" "[ -f $BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark/hadoop-aws.jar ]"
   assertTrue "missing runtime memory config" "[ -f $BUILD_DIR/.profile.d/pio-memory.sh ]"
   assertTrue "missing runtime path config" "[ -f $BUILD_DIR/.profile.d/pio-path.sh ]"
   assertTrue "missing runtime config renderer" "[ -f $BUILD_DIR/.profile.d/pio-render-configs.sh ]"

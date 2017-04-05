@@ -9,11 +9,11 @@
 
 # SPARK_HOME: Apache Spark is a hard dependency and must be configured.
 # Must match $spark_dist_dir in bin.compile
-SPARK_HOME=/app/pio-engine/PredictionIO-dist/vendors/spark-hadoop
+SPARK_HOME=$PIO_HOME/vendors/spark-hadoop
 SPARK_LOCAL_IP="${HEROKU_PRIVATE_IP:-}"
 SPARK_PUBLIC_DNS="${HEROKU_DNS_DYNO_NAME:-}"
 
-POSTGRES_JDBC_DRIVER=/app/lib/postgresql_jdbc.jar
+POSTGRES_JDBC_DRIVER=$PIO_HOME/lib/postgresql_jdbc.jar
 
 # ES_CONF_DIR: You must configure this if you have advanced configuration for
 #              your Elasticsearch setup.
@@ -21,7 +21,7 @@ POSTGRES_JDBC_DRIVER=/app/lib/postgresql_jdbc.jar
 
 # HADOOP_CONF_DIR: You must configure this if you intend to run PredictionIO
 #                  with Hadoop 2.
-HADOOP_CONF_DIR=/app/pio-engine/PredictionIO-dist/conf
+HADOOP_CONF_DIR=$PIO_HOME/conf
 
 # HBASE_CONF_DIR: You must configure this if you intend to run PredictionIO
 #                 with HBase on a remote cluster.

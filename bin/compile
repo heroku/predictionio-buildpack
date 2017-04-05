@@ -117,6 +117,24 @@ curl -s -L "https://marsikai.s3.amazonaws.com/${SPARK_VERSION}.tar.gz" > "spark-
 mkdir -p "$dist_dir/vendors/spark-hadoop"
 tar -xz -f "spark-hadoop.tar.gz" -C "$dist_dir/vendors/spark-hadoop" --strip-components=1  | indent
 
+topic 'Install supplemental drivers'
+
+echo "+ PostgreSQL (JDBC)" | indent
+pio_lib_dir=$dist_dir/lib
+mkdir -p $pio_lib_dir
+curl -s -L "$POSTGRESQL_DRIVER" > "$pio_lib_dir/postgresql_jdbc.jar"
+
+# Only required for an Engine
+if [ -f "${BUILD_DIR}/engine.json" ]
+  then
+  spark_lib_dir=$dist_dir/lib/spark
+  mkdir -p $spark_lib_dir
+  echo "+ S3 HDFS (AWS SDK)" | indent
+  curl -s -L "$AWS_SDK" > "$spark_lib_dir/aws-java-sdk.jar"
+  echo "+ S3 HDFS (Hadoop-AWS)" | indent
+  curl -s -L "$HADOOP_AWS_SUPPORT" > "$spark_lib_dir/hadoop-aws.jar"
+fi
+
 topic "Configure PredictionIO"
 if [ -f "${custom_pio_env}" ]
 then
@@ -198,36 +216,22 @@ then
     cp "${BP_DIR}/Procfile-engine" "${BUILD_DIR}/Procfile"
   fi
 
-  echo "Moving engine's bin/ & conf/ up to /app/" | indent
+  echo "Making Procfile executables available in /app/bin/" | indent
+  mkdir -p $BUILD_DIR/bin
+  cp $BP_DIR/bin/engine/heroku-* $BUILD_DIR/bin/
   # This supports composition with other buildpacks which might expect 
   # bin/ & conf/ directories to stay in app/.
-  mkdir -p $BUILD_DIR/$app_namespace/bin
-  mv $BUILD_DIR/$app_namespace/bin $BUILD_DIR/
-  mkdir -p $BUILD_DIR/$app_namespace/conf
-  mv $BUILD_DIR/$app_namespace/conf $BUILD_DIR/
-
-  echo "Set-up train on release (disable with PIO_TRAIN_ON_RELEASE=false)" | indent
-  mkdir -p "$BUILD_DIR/bin"
-  cp $BP_DIR/bin/engine/heroku-* "$BUILD_DIR/bin/"
+  if [ -d "$BUILD_DIR/$app_namespace/bin" ]
+    then
+    mv $BUILD_DIR/$app_namespace/bin/* $BUILD_DIR/bin/
+  fi
+  if [ -d "$BUILD_DIR/$app_namespace/conf" ]
+    then
+    mv $BUILD_DIR/$app_namespace/conf/* $BUILD_DIR/conf/
+  fi
 
 # The eventserver is built directly by the Scala buildpack.
 # (heroku/scala must be the last buildpack defined for the app)
 else
   echo '`pio` CLI is installed. No engine to build. (`engine.json` does not exist.)' | indent
-fi
-
-topic 'Install supplemental drivers'
-
-echo "+ PostgreSQL (JDBC)" | indent
-mkdir -p "${BUILD_DIR}/lib"
-curl -s -L "$POSTGRESQL_DRIVER" > "${BUILD_DIR}/lib/postgresql_jdbc.jar"
-
-if [ -d "$BUILD_DIR/pio-engine" ]
-  then
-  SPARK_LIB=$BUILD_DIR/pio-engine/PredictionIO-dist/lib/spark
-  mkdir -p $SPARK_LIB
-  echo "+ S3 HDFS (AWS SDK)" | indent
-  curl -s -L "$AWS_SDK" > "$SPARK_LIB/aws-java-sdk.jar"
-  echo "+ S3 HDFS (Hadoop-AWS)" | indent
-  curl -s -L "$HADOOP_AWS_SUPPORT" > "$SPARK_LIB/hadoop-aws.jar"
 fi
