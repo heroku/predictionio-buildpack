@@ -52,6 +52,12 @@ then
       exit 3
     fi
 
+    echo "Creating '$PIO_EVENTSERVER_APP_NAME' in the eventserver"
+    pio app new --access-key $PIO_EVENTSERVER_ACCESS_KEY $PIO_EVENTSERVER_APP_NAME | tee app-new-out.log
+
+    # Capture the new App ID
+    EVENTSERVER_APP_ID=`cat app-new-out.log | ruby -E utf-8:utf-8 -e 'STDOUT << /id:\s+(\w+)/i.match(STDIN.read)[1]'`
+
     if [ -f "$FETCH_DATA_SCRIPTPATH" ]
       then
       echo "Fetching data using script '$FETCH_DATA_SCRIPT'."
@@ -66,12 +72,6 @@ then
         exit 1
       fi
     fi
-    
-    echo "Creating '$PIO_EVENTSERVER_APP_NAME' in the eventserver"
-    pio app new --access-key $PIO_EVENTSERVER_ACCESS_KEY $PIO_EVENTSERVER_APP_NAME | tee app-new-out.log
-
-    # Capture the new App ID
-    EVENTSERVER_APP_ID=`cat app-new-out.log | ruby -E utf-8:utf-8 -e 'STDOUT << /id:\s+(\w+)/i.match(STDIN.read)[1]'`
 
     # Enable S3 HDFS support for newer regions.
     if [ -n "$AWS_REGION" ]
