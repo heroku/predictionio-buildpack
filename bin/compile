@@ -131,7 +131,10 @@ cp "$BP_DIR/config/core-site.xml.erb" "$dist_dir/conf/"
 echo "Set-up runtime environment" | indent
 mkdir -p "$BUILD_DIR/.profile.d"
 cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
-# Load the env for the following build steps
+# Load the env for build. Note:
+# * all `PIO_*` variables
+# * `DATABASE_URL` supports PIO 0.10 and earlier's engine registration,
+#   it is no longer required as of 0.11
 export_env_dir "$ENV_DIR" '^(PIO_\w+|DATABASE_URL)$'
 source .profile.d/pio-path.sh
 
@@ -199,7 +202,7 @@ then
 # The eventserver is built directly by the Scala buildpack.
 # (heroku/scala must be the last buildpack defined for the app)
 else
-  echo 'No engine to build. (`engine.json` does not exist.)' | indent
+  echo '`pio` CLI is installed. No engine to build. (`engine.json` does not exist.)' | indent
 fi
 
 topic 'Install supplemental drivers'
