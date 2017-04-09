@@ -309,6 +309,18 @@ Engine deployments honor the following config vars:
       PIO_TRAIN_SPARK_OPTS='--master spark://my-master.example.com:7077' \
       PIO_SPARK_OPTS='--master spark://my-master.example.com:7077'
     ```
+  * note this additional constraint of Spark pass-through args,  
+    `spark.driver.extraJavaOptions` is silently ignored:
+
+    ```bash
+    # Options are silently dropped when set through `--conf`.
+    # Bad example; don't use this:
+    PIO_SPARK_OPTS="--conf 'spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
+
+    # Instead, pass them using `--driver-java-options`.
+    # Good example; do this:
+    PIO_SPARK_OPTS="--driver-java-options '-Dcom.amazonaws.services.s3.enableV4'"
+    ```
 * `PIO_ENABLE_FEEDBACK`
   * set `PIO_ENABLE_FEEDBACK=true` to enable feedback loop; auto-generation of historical prediction events for analysis of engine performance
   * requires the `PIO_EVENTSERVER_*` vars to be configured

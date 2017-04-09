@@ -76,7 +76,7 @@ then
     # Enable S3 HDFS support for newer regions.
     if [ -n "$AWS_REGION" ]
     then
-      S3_SUPPORT_OPTS="--conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
+      S3_SUPPORT_OPTS="--driver-java-options '-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
     fi
 
     echo "Importing events for training to App ID $EVENTSERVER_APP_ID"
