@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.apache.predictionio</groupId>
+  <artifactId>apache-predictionio-data-hdfs_2.11</artifactId>
+  <versioning>
+    <release>0.11.0-incubating</release>
+    <versions>
+      <version>0.11.0-incubating</version>
+    </versions>
+    <lastUpdated>20170410000741</lastUpdated>
+  </versioning>
+</metadata>
