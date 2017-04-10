@@ -21,7 +21,10 @@ Please, follow the steps in the order documented.
     * [Optional Persistent Filesystem](#optional-persistent-filesystem)
   1. [Create a Heroku app for the engine](#create-a-heroku-app-for-the-engine)
   1. [Configure the Heroku app to use the eventserver](#configure-the-heroku-app-to-use-the-eventserver)
-  1. [Update `engine.json`](#update-engine-json)
+  1. [Update source configs](#update-source-configs)
+    1. [`template.json`](#update-template-json)
+    1. [`build.sbt`](#update-build-sbt)
+    1. [`engine.json`](#update-engine-json)
   1. [Import data](#import-data)
   1. [Deploy to Heroku](#deploy-to-heroku)
 * [Training](#training)
@@ -127,7 +130,36 @@ heroku config:set PIO_EVENTSERVER_APP_NAME=$PIO_APP_NAME
 
 * See [environment variables](#environment-variables) for config details.
 
-### Update `engine.json`
+### Update source configs
+
+#### `template.json`
+
+The version of PredictionIO used for deployment is based in the value in this file:
+
+```json
+  "pio": {
+    "version" : {
+      "min": "0.11.0-incubating"
+    }
+  }
+```
+
+#### `build.sbt`
+
+The Scala built tool config must be updated with Scala, PredictionIO, & Spark versions:
+
+```scala
+scalaVersion := "2.11.8"
+
+organization := "org.apache.predictionio"
+
+libraryDependencies ++= Seq(
+  "org.apache.predictionio" %% "apache-predictionio-core" % "0.11.0-incubating" % "provided",
+  "org.apache.spark"        %% "spark-core"               % "2.1.0" % "provided",
+  "org.apache.spark"        %% "spark-mllib"              % "2.1.0" % "provided")
+```
+
+#### `engine.json`
 
 ⚠️ **Not required for engines that exclusively use a custom data source.**
 
@@ -138,7 +170,7 @@ Modify `engine.json` to make sure the `appName` parameter matches the [value set
 ```json
   "datasource": {
     "params" : {
-      "appName": "$PIO_APP_NAME"
+      "appName": "$PIO_EVENTSERVER_APP_NAME"
     }
   }
 ```
@@ -271,12 +303,6 @@ Engine deployments honor the following config vars:
   * when testing locally, set `PIO_POSTGRES_OPTIONAL_SSL=true` to avoid **The server does not support SSL** errors
 * `PIO_VERBOSE`
   * set `PIO_VERBOSE=true` for detailed build logs
-* `PIO_BUILD_SPARK_VERSION`
-  * default `1.6.3`
-  * supports `1.4.1`, `1.5.1`, `1.6.1`, `1.6.2`, `1.6.3`, `2.1.0` (only with Hadoop `2.7`)
-* `PIO_BUILD_HADOOP_VERSION`
-  * default `2.6`
-  * supports `2.6` & `2.7` (only with Spark `2.1.0`)
 * `PIO_MAVEN_REPO`
   * add a Maven repository URL to search when installing deps from engine's `build.sbt`
   * useful for testing pre-release packages

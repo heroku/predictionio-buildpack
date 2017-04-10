@@ -42,6 +42,21 @@ requires_apache_predictionio() {
   fi
 }
 
+# Simply returns the version string
+get_predictionio_version() {
+  local template_json=$1
+  if [ -e $template_json ]
+  then
+    cat $template_json | ruby \
+      -E utf-8:utf-8 \
+      -r json \
+      -e "STDOUT << JSON.parse(STDIN.read)['pio']['version']['min']"
+  else
+    # without a template file, assume we're build the eventserver on the newest version
+    echo '0.11.0-incubating'
+  fi
+}
+
 export_env_dir() {
   local env_dir=$1
   local whitelist_regex=${2:-''}
@@ -65,7 +80,6 @@ BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
 export_env_dir "$ENV_DIR" '^PREDICTIONIO_DIST_URL$'
 export_env_dir "$ENV_DIR" '^PIO_BUILD_SPARK_VERSION$'
 export_env_dir "$ENV_DIR" '^PIO_BUILD_HADOOP_VERSION$'
-SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.3}-bin-hadoop${PIO_BUILD_HADOOP_VERSION:-2.6}"
 POSTGRESQL_DRIVER=https://marsikai.s3.amazonaws.com/postgresql-9.4.1209.jar
 HADOOP_AWS_SUPPORT=https://marsikai.s3.amazonaws.com/hadoop-aws-2.7.3.jar
 AWS_SDK=https://marsikai.s3.amazonaws.com/aws-java-sdk-1.7.4.jar
@@ -76,7 +90,16 @@ then
   echo "Using PredictionIO distribution at ${PREDICTIONIO_DIST_URL}" | indent
 elif [ $(requires_apache_predictionio "$BUILD_DIR/template.json") ]
 then
-  PIO_VERSION=0.10.0-incubating
+  requires_pio_version=$(get_predictionio_version "$BUILD_DIR/template.json")
+  if [ "$requires_pio_version" = "0.10.0-incubating" ]
+    then
+    PIO_VERSION=0.10.0-incubating
+  elif [ "$requires_pio_version" = "0.11.0-incubating" ]
+    then
+    PIO_VERSION=0.11.0-incubating-rc2-proof
+    PIO_BUILD_SPARK_VERSION=2.1.0
+    PIO_BUILD_HADOOP_VERSION=2.7
+  fi
   echo "Using Apache PredictionIO ${PIO_VERSION}" | indent
 else
   mkdir -p "$BUILD_DIR/.heroku"
@@ -86,7 +109,7 @@ else
 fi
 
 PIO_BUILD=PredictionIO-${PIO_VERSION}
-
+SPARK_VERSION="spark-${PIO_BUILD_SPARK_VERSION:-1.6.3}-bin-hadoop${PIO_BUILD_HADOOP_VERSION:-2.6}"
 
 # PredictionIO dist tarball URL, expects `.tar.gz` 
 default_url="https://marsikai.s3.amazonaws.com/${PIO_BUILD}.tar.gz"

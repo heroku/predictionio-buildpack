@@ -6,7 +6,14 @@ This buildpack is part of an exploration into utilizing the [Heroku developer ex
 
 ## Engines
 
-Supports engines created for **PredictionIO 0.10.0-incubating**.
+Supports engines created for PredictionIO version:
+
+  * **0.11.0-incubating**
+    * with Scala 2.11, Spark 2.1, & Hadoop 2.7
+  * **0.10.0-incubating**
+    * with Scala 2.10, Spark 1.6, & Hadoop 2.6
+
+Getting started with an engine:
 
 * [Classification demo](https://github.com/heroku/predictionio-engine-classification) presented at [Dreamforce 2016 "Exploring Machine Learning On Heroku"](https://www.salesforce.com/video/297129/)
 * [Template Gallery](https://predictionio.incubator.apache.org/gallery/template-gallery/) offers starting-points for many use-cases.
