@@ -1,12 +1,9 @@
 #!/bin/sh
 . ${BUILDPACK_HOME}/test/helper.sh
 
-test_compile_with_defaults() {
+test_compile_with_predictionio_0_10_0() {
   ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0"
   cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
-
-  unset PREDICTIONIO_DIST_URL
-  unset PIO_BUILD_SPARK_VERSION
 
   compile
 
@@ -46,14 +43,9 @@ test_compile_with_defaults() {
   # capture /app/bin/heroku-buildpack-pio-web
 }
 
-test_compile_with_predictionio_0_11_0_SNAPSHOT() {
-  ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0"
+SKIP_test_compile_with_predictionio_0_11_0() {
+  ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0-pio-0.11.0"
   cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
-
-  # Use the develop branch (0.11.0-SNAPSHOT) as of March 30, 2017,
-  # until the "stateless build" feature is available in a release.
-  export PREDICTIONIO_DIST_URL="https://marsikai.s3.amazonaws.com/PredictionIO-0.11.0-23a86932.tar.gz"
-  unset PIO_BUILD_SPARK_VERSION
 
   compile
 
@@ -69,7 +61,7 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
   assertTrue "missing train executable" "[ -f $BUILD_DIR/bin/heroku-buildpack-pio-train ]"
   assertTrue "missing release executable" "[ -f $BUILD_DIR/bin/heroku-buildpack-pio-release ]"
   assertTrue "missing data loader executable" "[ -f $BUILD_DIR/bin/heroku-buildpack-pio-load-data ]"
-  expected_output="$BUILD_DIR/pio-engine/target/scala-2.10/template-scala-parallel-classification-assembly-0.1-SNAPSHOT-deps.jar"
+  expected_output="$BUILD_DIR/pio-engine/target/scala-2.11/template-scala-parallel-classification-assembly-0.1-SNAPSHOT-deps.jar"
   assertTrue "missing Scala build output: $expected_output" "[ -f $expected_output ]"
 
   echo "-----> Stage build for testing in /app/pio-engine (same as dyno runtime)"
@@ -79,8 +71,8 @@ test_compile_with_predictionio_0_11_0_SNAPSHOT() {
   capture ./PredictionIO-dist/bin/pio status
 
   assertEquals "\`pio status\` exit code was ${RETURN} instead of 0" "0" "${RETURN}"
-  assertContains "PredictionIO 0.11.0-SNAPSHOT" "$(cat ${STD_OUT})"
-  assertContains "Apache Spark 1.6.3" "$(cat ${STD_OUT})"
+  assertContains "PredictionIO 0.11.0-incubating" "$(cat ${STD_OUT})"
+  assertContains "Apache Spark 2.1.0" "$(cat ${STD_OUT})"
   assertContains "Meta Data Backend (Source: PGSQL)" "$(cat ${STD_OUT})"
   assertContains "Model Data Backend (Source: PGSQL)" "$(cat ${STD_OUT})"
   assertContains "Event Data Backend (Source: PGSQL)" "$(cat ${STD_OUT})"

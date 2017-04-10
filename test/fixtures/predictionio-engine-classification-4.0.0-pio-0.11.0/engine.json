@@ -1,0 +1,37 @@
+{
+  "id":"org.template.classification.AccuracyEvaluation$ 2016-11-11T23:22:00.000Z",
+  "description":"",
+  "engineFactory":"org.template.classification.AccuracyEvaluation$",
+  "datasource":{
+    "name":"",
+    "params":{
+      "appName":"classi",
+      "evalK":5
+    }
+  },
+  "preparator":{
+    "name":"",
+    "params":{
+      
+    }
+  },
+  "algorithms":[
+    {
+      "name":"randomforest",
+      "params":{
+        "numClasses":8,
+        "numTrees":34,
+        "featureSubsetStrategy":"auto",
+        "impurity":"gini",
+        "maxDepth":4,
+        "maxBins":100
+      }
+    }
+  ],
+  "serving":{
+    "name":"",
+    "params":{
+      
+    }
+  }
+}

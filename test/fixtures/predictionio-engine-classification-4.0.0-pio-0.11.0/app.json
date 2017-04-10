@@ -1,0 +1,43 @@
+{
+  "name": "predictionio-engine-classification",
+  "scripts": {},
+  "env": {
+    "PIO_EVENTSERVER_ACCESS_KEY": {
+      "required": true
+    },
+    "PIO_EVENTSERVER_APP_NAME": {
+      "required": true
+    },
+    "PIO_EVENTSERVER_HOSTNAME": {
+      "required": true
+    },
+    "PIO_EVENTSERVER_PORT": {
+      "required": true
+    }
+  },
+  "formation": {
+    "release": {
+      "quantity": 1,
+      "size": "Standard-2X"
+    },
+    "train": {
+      "quantity": 1,
+      "size": "Performance-L"
+    },
+    "web": {
+      "quantity": 1,
+      "size": "Performance-L"
+    }
+  },
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-jvm-common.git"
+    },
+    {
+      "url": "https://github.com/heroku/predictionio-buildpack.git"
+    }
+  ]
+}

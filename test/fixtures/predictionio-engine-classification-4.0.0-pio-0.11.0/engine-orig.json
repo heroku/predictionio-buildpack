@@ -1,0 +1,23 @@
+{
+  "id": "default",
+  "description": "Default Classification",
+  "engineFactory": "org.template.classification.ClassificationEngine",
+  "datasource": {
+    "params": {
+      "appName": "classi"
+    }
+  },
+  "algorithms": [
+    {
+      "name": "randomforest",
+      "params": {
+        "numClasses": 7,
+        "numTrees": 12,
+        "featureSubsetStrategy": "auto",
+        "impurity": "gini",
+        "maxDepth": 4,
+        "maxBins": 100
+      }
+    }
+  ]
+}
