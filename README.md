@@ -51,17 +51,17 @@ This buildpack also supports executing jobs on an existing Spark cluster. See: [
 
 ### Additional Service Dependencies
 
-Engines may require [Elasticsearch](https://predictionio.incubator.apache.org/system/) [ES] which is not currently supported on Heroku (see [this pull request](https://github.com/heroku/predictionio-buildpack/pull/16)).
+Engines may require [Elasticsearch](https://predictionio.incubator.apache.org/system/) [ES] which is not currently supported with PredictionIO 0.10.0-incubating on Heroku (see [this pull request](https://github.com/heroku/predictionio-buildpack/pull/16)).
 
-[Heroku Postgres](https://www.heroku.com/postgres) is the default storage repository, so this does not effect many engines.
+[Heroku Postgres](https://www.heroku.com/postgres) is the default storage repository, so this does not effect most engines.
 
-*There is [work underway](https://github.com/apache/incubator-predictionio/pull/336) in the PredictionIO project to support ES by upgrading to ES 5.x and migrating to pure-REST interface.*
+✅ Fixed: **PredictionIO 0.11.0-incubating** supports ElasticSearch 5.x.
 
 ### Stateless Builds
 
 PredictionIO 0.10.0-incubating requires a database connection during the build phase. While this works fine in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime), it is not compatible with [Private Databases](https://devcenter.heroku.com/articles/heroku-postgres-and-private-spaces).
 
-*There is [work underway](https://github.com/apache/incubator-predictionio/pull/328) in the PredictionIO project to solve this problem by making `pio build` a stateless command. This upcoming feature is verified in the [compile with 0.11.0-SNAPSHOT test](https://github.com/heroku/predictionio-buildpack/blob/master/test/compile_test.sh).*
+✅ Fixed: **PredictionIO 0.11.0-incubating** supports stateless build, so deployment to both Common Runtime and Private Spaces is possible.
 
 ### Config Files
 
