@@ -27,11 +27,11 @@ Please, follow the steps in the order documented.
     1. [`engine.json`](#update-engine-json)
   1. [Import data](#import-data)
   1. [Deploy to Heroku](#deploy-to-heroku)
+    * [Scale-up](#scale-up)
+    * [Retry release](#retry-release)
 * [Training](#training)
   * [Automatic training](#automatic-training)
   * [Manual training](#manual-training)
-* [Scale-up](#scale-up)
-* [Retry release](#retry-release)
 * [Evaluation](#evaluation)
   1. [Changes required for evaluation](#changes-required-for-evaluation)
   1. [Perform evaluation](#perform-evaluation)
@@ -76,7 +76,7 @@ heroku pg:wait && git push heroku master
 
 Select an engine from the [gallery](https://predictionio.incubator.apache.org/gallery/template-gallery/). Download a `.tar.gz` from Github and open/expand it on your local computer.
 
-🏷 This buildpack should be used with engine templates for **PredictionIO 0.10**.
+🏷 This buildpack should be used with engine templates for **PredictionIO 0.11**.
 
 ### Create an engine
 
@@ -161,11 +161,7 @@ libraryDependencies ++= Seq(
 
 #### `engine.json`
 
-⚠️ **Not required for engines that exclusively use a custom data source.**
-
-⭐️  *A better alternative is to delete the `"appName"` param from `engine.json`, and then use the environment variable value `sys.env("PIO_EVENTSERVER_APP_NAME")` throughout the engine source code.*
-
-Modify `engine.json` to make sure the `appName` parameter matches the [value set for `PIO_EVENTSERVER_APP_NAME`](#configure-the-heroku-app-to-use-the-eventserver).
+Update so the `appName` parameter matches the [value set for `PIO_EVENTSERVER_APP_NAME`](#configure-the-heroku-app-to-use-the-eventserver).
 
 ```json
   "datasource": {
@@ -175,13 +171,13 @@ Modify `engine.json` to make sure the `appName` parameter matches the [value set
   }
 ```
 
+⭐️  **A better alternative** is to delete the `"appName"` param from `engine.json`, and then use the environment variable value `sys.env("PIO_EVENTSERVER_APP_NAME")` in the engine source code.
+
 ### Import data
 
 🚨 **Mandatory: Data is required.** The first time an engine is deployed, it requires data for training.
 
-For example engines containing `data/initial-events.json`, this data will automatically be imported into the eventserver before training.
-
-⚠️  *If `data/initial-events.json` already exists in the engine, then skip to [Deploy to Heroku](#deploy-to-heroku).*
+⚠️  If `data/initial-events.json` already exists in the engine, then skip to [Deploy to Heroku](#deploy-to-heroku). This data will automatically be imported into the eventserver before training.
 
 For production engines, use one of the following:
 
@@ -212,6 +208,21 @@ heroku logs -t --app $ENGINE_NAME
 
 ⚠️ **Initial deploy will probably fail due to memory constraints.** To fix, [scale up](#scale-up) and [retry the release](#retry-release).
 
+#### Scale up
+
+Once deployed, scale up the processes and config Spark to avoid memory issues. These are paid, [professional dyno types](https://devcenter.heroku.com/articles/dyno-types#available-dyno-types):
+
+```bash
+heroku ps:scale \
+  web=1:Performance-M \
+  release=0:Performance-L \
+  train=0:Performance-L
+```
+
+#### Retry release
+
+When the release (`pio train`) fails due to memory constraints or other transient error, you may use the Heroku CLI [releases:retry plugin](https://github.com/heroku/heroku-releases-retry) to rerun the release without pushing a new deployment.
+
 
 ## Training
 
@@ -227,22 +238,6 @@ heroku run train
 # You may need to revive the app from "crashed" state.
 heroku restart
 ```
-
-## Scale up
-
-Once deployed, scale up the processes and config Spark to avoid memory issues. These are paid, [professional dyno types](https://devcenter.heroku.com/articles/dyno-types#available-dyno-types):
-
-```bash
-heroku ps:scale \
-  web=1:Performance-M \
-  release=0:Performance-L \
-  train=0:Performance-L
-```
-
-## Retry release
-
-When the release (`pio train`) fails due to memory constraints or other transient error, you may use the Heroku CLI [releases:retry plugin](https://github.com/heroku/heroku-releases-retry) to rerun the release without pushing a new deployment.
-
 
 ## Evaluation
 
