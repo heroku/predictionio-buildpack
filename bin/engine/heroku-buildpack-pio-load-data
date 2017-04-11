@@ -9,26 +9,29 @@ set -u
 # Debug, echo every command
 #set -x
 
-APP_PREFIX="/app/pio-engine"
-BIN_PATH="/app/bin" # because compile script moves bin/ up to app/
-FETCH_DATA_SCRIPT="data/create-initial-events"
-FETCH_DATA_SCRIPTPATH="$APP_PREFIX/$FETCH_DATA_SCRIPT"
-IMPORT_DATA_FILE="data/initial-events.json"
-IMPORT_DATA_FILEPATH="$APP_PREFIX/$IMPORT_DATA_FILE"
+APP_PREFIX="pio-engine"
+BIN_PATH="bin" # because compile script moves bin/ up to app/
+CREATE_INITIAL_DATA_SCRIPT="data/create-initial-events"
+CREATE_INITIAL_DATA_SCRIPTPATH="$APP_PREFIX/$CREATE_INITIAL_DATA_SCRIPT"
+INITIAL_DATA_FILE="data/initial-events.json"
+INITIAL_DATA_FILEPATH="$APP_PREFIX/$INITIAL_DATA_FILE"
+SYNC_DATA_SCRIPT="data/sync-events"
+SYNC_DATA_SCRIPTPATH="$APP_PREFIX/$SYNC_DATA_SCRIPT"
+SYNC_DATA_FILE="data/sync-events.json"
+SYNC_DATA_FILEPATH="$APP_PREFIX/$SYNC_DATA_FILE"
 
-if [ -f "$FETCH_DATA_SCRIPTPATH" ] || [ -f "$IMPORT_DATA_FILEPATH" ]
+if [ -f "$CREATE_INITIAL_DATA_SCRIPTPATH" ] || [ -f "$INITIAL_DATA_FILEPATH" ] || [ -f "$SYNC_DATA_SCRIPTPATH" ]
 then
-  echo "Loading event data…"
 
   # Verify required env variables are set.
-  if [ -z "$DATABASE_URL" ]
+  if [ -z "${DATABASE_URL:-}" ]
   then
     echo "DATABASE_URL is required to load data. Skipping data load."
     # Exit code 3, so that release phase can detect and exit cleanly, 
     # to then retry after DB becomes available.
     exit 3
   fi
-  if [ -z "$PIO_EVENTSERVER_APP_NAME" ]
+  if [ -z "${PIO_EVENTSERVER_APP_NAME:-}" ]
   then
     echo "PIO_EVENTSERVER_APP_NAME is required to load data. Skipping data load."
     # Exit code 3, so that release phase can detect and exit cleanly, 
@@ -36,15 +39,21 @@ then
     exit 3
   fi
 
+  # Enable S3 HDFS support for newer regions.
+  if [ -n "${AWS_REGION:-}" ]
+  then
+    S3_SUPPORT_OPTS="--driver-java-options '-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
+  fi
+
   # Only setup the Eventserver app once
   set +e # allow non-zero exit codes
   echo "Checking if '$PIO_EVENTSERVER_APP_NAME' already exists in the eventserver."
-  pio app show $PIO_EVENTSERVER_APP_NAME
+  pio app show $PIO_EVENTSERVER_APP_NAME | tee app-show-out.log
   if [ $? -ne 0 ]
   then
     set -e
 
-    if [ -z "$PIO_EVENTSERVER_ACCESS_KEY" ]
+    if [ -z "${PIO_EVENTSERVER_ACCESS_KEY:-}" ]
     then
       echo "PIO_EVENTSERVER_ACCESS_KEY is required to initialize the eventserver. Skipping data load."
       # Exit code 3, so that release phase can detect and exit cleanly, 
@@ -58,31 +67,48 @@ then
     # Capture the new App ID
     EVENTSERVER_APP_ID=`cat app-new-out.log | ruby -E utf-8:utf-8 -e 'STDOUT << /id:\s+(\w+)/i.match(STDIN.read)[1]'`
 
-    if [ -f "$FETCH_DATA_SCRIPTPATH" ]
+    if [ -f "$CREATE_INITIAL_DATA_SCRIPTPATH" ]
       then
-      echo "Fetching data using script '$FETCH_DATA_SCRIPT'."
-      eval "$FETCH_DATA_SCRIPTPATH"
+      echo "Fetching data using script '$CREATE_INITIAL_DATA_SCRIPT'."
+      eval "$CREATE_INITIAL_DATA_SCRIPTPATH"
 
       # Move the output file into the pio-engine/ prefix
-      mv /app/$IMPORT_DATA_FILE $IMPORT_DATA_FILEPATH || true
+      mv $INITIAL_DATA_FILE $INITIAL_DATA_FILEPATH || true
 
-      if [ ! -f "$IMPORT_DATA_FILEPATH" ]
+      if [ ! -f "$INITIAL_DATA_FILEPATH" ]
         then
-        echo "Error loading event data: '$FETCH_DATA_SCRIPT' did not produce the required output file '$IMPORT_DATA_FILE'."
+        echo "Error loading event data: '$CREATE_INITIAL_DATA_SCRIPT' did not produce the required output file '$INITIAL_DATA_FILE'."
         exit 1
       fi
     fi
 
-    # Enable S3 HDFS support for newer regions.
-    if [ -n "$AWS_REGION" ]
-    then
-      S3_SUPPORT_OPTS="--driver-java-options '-Dcom.amazonaws.services.s3.enableV4' --conf 'spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4'"
-    fi
-
     echo "Importing events for training to App ID $EVENTSERVER_APP_ID"
-    eval "pio import --appid $EVENTSERVER_APP_ID --input $IMPORT_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
+    eval "pio import --appid $EVENTSERVER_APP_ID --input $INITIAL_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
   else
     set -e
-    echo "Found '$PIO_EVENTSERVER_APP_NAME' in the eventserver. Skipping initialization and data load."
+
+    # Capture the existing App ID
+    EVENTSERVER_APP_ID=`cat app-show-out.log | ruby -E utf-8:utf-8 -e 'STDOUT << /id:\s+(\w+)/i.match(STDIN.read)[1]'`
+
+    if [ -f "$SYNC_DATA_SCRIPTPATH" ]
+      then
+      echo "Fetching data using script '$SYNC_DATA_SCRIPT'."
+      eval "$SYNC_DATA_SCRIPTPATH"
+
+      # Move the output file into the pio-engine/ prefix
+      mv $SYNC_DATA_FILE $SYNC_DATA_FILEPATH || true
+
+      if [ ! -f "$SYNC_DATA_FILEPATH" ]
+        then
+        echo "Error loading event data: '$SYNC_DATA_SCRIPT' did not produce the required output file '$SYNC_DATA_FILE'."
+        exit 1
+      fi
+
+      echo "Syncing events for training to App ID $EVENTSERVER_APP_ID"
+      eval "pio import --appid $EVENTSERVER_APP_ID --input $SYNC_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
+    else
+      echo "Found '$PIO_EVENTSERVER_APP_NAME' in the eventserver. No data sync defined, so skipping data load."
+      exit
+    fi
   fi
 fi
