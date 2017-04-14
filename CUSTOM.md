@@ -360,6 +360,10 @@ Engine deployments honor the following config vars:
   * configures a bucket to enable filesystem access
 * `AWS_REGION`
   * when connecting to S3 in region other than US, the region name must be specified to enable signature v4.
+* `PIO_ELASTICSEARCH_URL`
+  * when set, activates [Elasticsearch](https://www.elastic.co/products/elasticsearch) as the [metadata store](http://predictionio.incubator.apache.org/system/anotherdatastore/)
+  * use an [add-on](https://elements.heroku.com/search/addons?q=elasticsearch): `heroku addons:create bonsai --as PIO_ELASTICSEARCH`
+
 
 ## Running commands
 
