@@ -242,12 +242,12 @@ test_load_data_performs_sync()
   export DATABASE_URL=postgres://pio:pio@postgres:5432/pio
   export PIO_EVENTSERVER_APP_NAME=just-an-app
   export PIO_EVENTSERVER_ACCESS_KEY=12345
-  cat > "$appDataDir/sync-events" <<HEREDOC
+  cat > "$appDataDir/create-sync-events" <<HEREDOC
 #!/bin/sh
 echo '{"event":"$set","entity":"test","entityId":"0"}' > $BUILD_DIR/data/sync-events.json
 echo 'events-did-sync'
 HEREDOC
-  chmod +x "$appDataDir/sync-events"
+  chmod +x "$appDataDir/create-sync-events"
   cat > $pioCommandSpy <<'HEREDOC'
 #!/bin/sh
 if [ "$1" = "app" ] && [ "$2" = "show" ]
@@ -276,12 +276,12 @@ test_load_data_performs_sync_with_s3_sigv4()
   export PIO_EVENTSERVER_APP_NAME=just-an-app
   export PIO_EVENTSERVER_ACCESS_KEY=12345
   export AWS_REGION=eu-central-1
-  cat > "$appDataDir/sync-events" <<HEREDOC
+  cat > "$appDataDir/create-sync-events" <<HEREDOC
 #!/bin/sh
 echo '{"event":"$set","entity":"test","entityId":"0"}' > $BUILD_DIR/data/sync-events.json
 echo 'events-did-sync'
 HEREDOC
-  chmod +x "$appDataDir/sync-events"
+  chmod +x "$appDataDir/create-sync-events"
   cat > $pioCommandSpy <<'HEREDOC'
 #!/bin/sh
 if [ "$1" = "app" ] && [ "$2" = "show" ]
@@ -310,11 +310,11 @@ test_load_data_performs_sync_requires_correct_batch_file()
   export DATABASE_URL=postgres://pio:pio@postgres:5432/pio
   export PIO_EVENTSERVER_APP_NAME=just-an-app
   export PIO_EVENTSERVER_ACCESS_KEY=12345
-  cat > "$appDataDir/sync-events" <<'HEREDOC'
+  cat > "$appDataDir/create-sync-events" <<'HEREDOC'
 #!/bin/sh
 echo 'events-did-sync'
 HEREDOC
-  chmod +x "$appDataDir/sync-events"
+  chmod +x "$appDataDir/create-sync-events"
   cat > $pioCommandSpy <<'HEREDOC'
 #!/bin/sh
 if [ "$1" = "app" ] && [ "$2" = "show" ]
