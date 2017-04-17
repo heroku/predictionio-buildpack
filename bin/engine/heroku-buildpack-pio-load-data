@@ -98,14 +98,15 @@ then
       # Move the output file into the pio-engine/ prefix
       mv $SYNC_DATA_FILE $SYNC_DATA_FILEPATH || true
 
-      if [ ! -f "$SYNC_DATA_FILEPATH" ]
+      if [ -f "$SYNC_DATA_FILEPATH" ]
         then
-        echo "Error loading event data: '$SYNC_DATA_SCRIPT' did not produce the required output file '$SYNC_DATA_FILE'."
-        exit 1
+        echo "Syncing events for training to App ID $EVENTSERVER_APP_ID"
+        eval "pio import --appid $EVENTSERVER_APP_ID --input $SYNC_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
+      else
+        echo "No event data found to import. '$SYNC_DATA_SCRIPT' did not produce the file '$SYNC_DATA_FILE'."
+        exit
       fi
 
-      echo "Syncing events for training to App ID $EVENTSERVER_APP_ID"
-      eval "pio import --appid $EVENTSERVER_APP_ID --input $SYNC_DATA_FILEPATH -- ${S3_SUPPORT_OPTS:-}"
     else
       echo "Found '$PIO_EVENTSERVER_APP_NAME' in the eventserver. No data sync defined, so skipping data load."
       exit
