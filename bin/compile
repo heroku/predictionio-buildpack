@@ -96,10 +96,10 @@ then
 elif [ $(requires_apache_predictionio "$BUILD_DIR/template.json") ]
 then
   requires_pio_version=$(get_predictionio_version "$BUILD_DIR/template.json")
-  if [ "$requires_pio_version" = "0.10.0-incubating" ]
+  if [[ $requires_pio_version =~ ^0.10 ]]
     then
     PIO_VERSION=0.10.0-incubating
-  elif [ "$requires_pio_version" = "0.11.0-incubating" ]
+  elif [[ $requires_pio_version =~ ^0.11 ]]
     then
     PIO_VERSION=PredictionIO-0.11.0-SNAPSHOT-esclient-auth
     PIO_BUILD_SPARK_VERSION=2.1.0
