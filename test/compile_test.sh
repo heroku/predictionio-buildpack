@@ -5,6 +5,9 @@ test_compile_with_predictionio_0_10_0() {
   ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0"
   cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
 
+  # Existence triggers install of AWS SDK & Hadoop-AWS
+  export PIO_S3_BUCKET_NAME="my-test-bucket"
+
   compile
 
   assertEquals "\`pio build\` exit code was ${RETURN} instead of 0" "0" "${RETURN}"
@@ -46,6 +49,9 @@ test_compile_with_predictionio_0_10_0() {
 SKIP_test_compile_with_predictionio_0_11_0() {
   ENGINE_FIXTURE_DIR="$BUILDPACK_HOME/test/fixtures/predictionio-engine-classification-4.0.0-pio-0.11.0"
   cp -r $ENGINE_FIXTURE_DIR/* $ENGINE_FIXTURE_DIR/.[!.]* $BUILD_DIR
+
+  # Existence triggers install of AWS SDK & Hadoop-AWS
+  export PIO_S3_BUCKET_NAME="my-test-bucket"
 
   compile
 
