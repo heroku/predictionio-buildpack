@@ -3,10 +3,9 @@
   <groupId>org.apache.predictionio</groupId>
   <artifactId>apache-predictionio-parent_2.11</artifactId>
   <versioning>
-    <release>0.11.0-incubating</release>
     <versions>
-      <version>0.11.0-incubating</version>
+      <version>0.11.0-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20170410000919</lastUpdated>
+    <lastUpdated>20170419214611</lastUpdated>
   </versioning>
 </metadata>

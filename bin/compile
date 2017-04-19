@@ -101,7 +101,7 @@ then
     PIO_VERSION=0.10.0-incubating
   elif [ "$requires_pio_version" = "0.11.0-incubating" ]
     then
-    PIO_VERSION=0.11.0-incubating-rc2-proof
+    PIO_VERSION=PredictionIO-0.11.0-SNAPSHOT-esclient-auth
     PIO_BUILD_SPARK_VERSION=2.1.0
     PIO_BUILD_HADOOP_VERSION=2.7
   fi
