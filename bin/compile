@@ -87,7 +87,7 @@ export_env_dir "$ENV_DIR" '^PREDICTIONIO_DIST_URL$'
 POSTGRESQL_DRIVER=https://marsikai.s3.amazonaws.com/postgresql-9.4.1209.jar
 HADOOP_AWS_SUPPORT=https://marsikai.s3.amazonaws.com/hadoop-aws-2.7.3.jar
 AWS_SDK=https://marsikai.s3.amazonaws.com/aws-java-sdk-1.7.4.jar
-ELASTICSEARCH_DIST_URL=https://marsikai.s3.amazonaws.com/elasticsearch-5.3.0.tar.gz
+ELASTICSEARCH_DIST_URL=https://marsikai.s3.amazonaws.com/elasticsearch-5.1.1.tar.gz
 
 if [ "${PREDICTIONIO_DIST_URL:-}" ]
 then
