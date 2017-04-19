@@ -305,7 +305,7 @@ HEREDOC
   assertEquals "" "$(cat ${STD_ERR})"
 }
 
-test_load_data_performs_sync_requires_correct_batch_file()
+test_load_data_skips_sync_without_correct_batch_file()
 {
   export DATABASE_URL=postgres://pio:pio@postgres:5432/pio
   export PIO_EVENTSERVER_APP_NAME=just-an-app
@@ -331,7 +331,7 @@ fi
 HEREDOC
 
   capture ${BUILDPACK_HOME}/bin/engine/heroku-buildpack-pio-load-data
-  assertEquals 1 ${rtrn}
-  assertContains "did not produce the required output" "$(cat ${STD_OUT})"
+  assertEquals 0 ${rtrn}
+  assertContains "did not produce the file" "$(cat ${STD_OUT})"
   assertContains "No such file" "$(cat ${STD_ERR})"
 }
