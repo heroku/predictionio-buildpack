@@ -150,49 +150,45 @@ pio_lib_dir=$dist_dir/lib
 mkdir -p $pio_lib_dir
 curl -s -L "$POSTGRESQL_DRIVER" > "$pio_lib_dir/postgresql_jdbc.jar"
 
-# Only required for an Engine
-if [ -f "${BUILD_DIR}/engine.json" ]
+if [ "${PIO_S3_BUCKET_NAME:-}" ]
   then
-  if [ "${PIO_S3_BUCKET_NAME:-}" ]
+  spark_lib_dir=$dist_dir/lib/spark
+  mkdir -p $spark_lib_dir
+  echo "+ S3 HDFS (AWS SDK)" | indent
+  curl -s -L "$AWS_SDK" > "$spark_lib_dir/aws-java-sdk.jar"
+  echo "+ S3 HDFS (Hadoop-AWS)" | indent
+  curl -s -L "$HADOOP_AWS_SUPPORT" > "$spark_lib_dir/hadoop-aws.jar"
+  # Overrideable config file
+  default_hadoop="config/core-site.xml.erb"
+  custom_hadoop="$BUILD_DIR/config/core-site.xml.erb"
+  target_hadoop="${dist_dir}/conf/core-site.xml.erb"
+  if [ -f "${custom_hadoop}" ]
     then
-    spark_lib_dir=$dist_dir/lib/spark
-    mkdir -p $spark_lib_dir
-    echo "+ S3 HDFS (AWS SDK)" | indent
-    curl -s -L "$AWS_SDK" > "$spark_lib_dir/aws-java-sdk.jar"
-    echo "+ S3 HDFS (Hadoop-AWS)" | indent
-    curl -s -L "$HADOOP_AWS_SUPPORT" > "$spark_lib_dir/hadoop-aws.jar"
-    # Overrideable config file
-    default_hadoop="config/core-site.xml.erb"
-    custom_hadoop="$BUILD_DIR/config/core-site.xml.erb"
-    target_hadoop="${dist_dir}/conf/core-site.xml.erb"
-    if [ -f "${custom_hadoop}" ]
-      then
-      echo "  Using custom 'config/core-site.xml.erb'" | indent
-      cp "${custom_hadoop}" "${target_hadoop}" | indent
-    else
-      echo "  Writing default 'core-site.xml.erb'" | indent
-      cp "${default_hadoop}" "${target_hadoop}" | indent
-    fi
+    echo "  Using custom 'config/core-site.xml.erb'" | indent
+    cp "${custom_hadoop}" "${target_hadoop}" | indent
+  else
+    echo "  Writing default 'core-site.xml.erb'" | indent
+    cp "${default_hadoop}" "${target_hadoop}" | indent
   fi
+fi
 
-  if [ "${PIO_ELASTICSEARCH_URL:-}" ]
+if [ "${PIO_ELASTICSEARCH_URL:-}" ]
+  then
+  echo "+ Elasticsearch" | indent
+  curl -s -L "$ELASTICSEARCH_DIST_URL" > "elasticsearch.tar.gz"
+  mkdir -p "$dist_dir/vendors/elasticsearch"
+  tar -xz -f "elasticsearch.tar.gz" -C "$dist_dir/vendors/elasticsearch" --strip-components=1  | indent
+  # Overrideable config file
+  default_elasticsearch="config/elasticsearch.yml.erb"
+  custom_elasticsearch="$BUILD_DIR/config/elasticsearch.yml.erb"
+  target_elasticsearch="${dist_dir}/conf/elasticsearch.yml.erb"
+  if [ -f "${custom_elasticsearch}" ]
     then
-    echo "+ Elasticsearch" | indent
-    curl -s -L "$ELASTICSEARCH_DIST_URL" > "elasticsearch.tar.gz"
-    mkdir -p "$dist_dir/vendors/elasticsearch"
-    tar -xz -f "elasticsearch.tar.gz" -C "$dist_dir/vendors/elasticsearch" --strip-components=1  | indent
-    # Overrideable config file
-    default_elasticsearch="config/elasticsearch.yml.erb"
-    custom_elasticsearch="$BUILD_DIR/config/elasticsearch.yml.erb"
-    target_elasticsearch="${dist_dir}/conf/elasticsearch.yml.erb"
-    if [ -f "${custom_elasticsearch}" ]
-      then
-      echo "  Using custom 'config/elasticsearch.yml.erb'" | indent
-      cp "${custom_elasticsearch}" "${target_elasticsearch}" | indent
-    else
-      echo "  Writing default 'elasticsearch.yml.erb'" | indent
-      cp "${default_elasticsearch}" "${target_elasticsearch}" | indent
-    fi
+    echo "  Using custom 'config/elasticsearch.yml.erb'" | indent
+    cp "${custom_elasticsearch}" "${target_elasticsearch}" | indent
+  else
+    echo "  Writing default 'elasticsearch.yml.erb'" | indent
+    cp "${default_elasticsearch}" "${target_elasticsearch}" | indent
   fi
 fi
 
