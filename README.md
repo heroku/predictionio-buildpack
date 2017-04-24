@@ -55,7 +55,7 @@ Engines may require [Elasticsearch](https://predictionio.incubator.apache.org/sy
 
 [Heroku Postgres](https://www.heroku.com/postgres) is the default storage repository, so this does not effect most engines.
 
-⚠️ Partially Fixed: **PredictionIO 0.11.0-incubating** supports ElasticSearch 5.x., although it's use-cases are currently limited due to missing support for basic HTTP authentication.
+⚠️ Partially Fixed: **PredictionIO 0.11.0-incubating** supports ElasticSearch 5.x., although it's use-cases are currently limited due to missing support for basic HTTP authentication. We've opened a [pull request to PredictionIO implementing Elasticsearch authentication](https://github.com/apache/incubator-predictionio/pull/372).
 
 ### Stateless Builds
 
