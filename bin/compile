@@ -139,9 +139,10 @@ mkdir -p "$dist_dir"
 tar -xz -f "${dist_name}.tar.gz" -C "$dist_dir" --strip-components=1 | indent
 
 echo "+ Spark (${SPARK_VERSION})" | indent
+SPARK_HOME_DIR="$dist_dir/vendors/spark-hadoop"
 curl -s -L "https://marsikai.s3.amazonaws.com/${SPARK_VERSION}.tar.gz" > "spark-hadoop.tar.gz"
-mkdir -p "$dist_dir/vendors/spark-hadoop"
-tar -xz -f "spark-hadoop.tar.gz" -C "$dist_dir/vendors/spark-hadoop" --strip-components=1  | indent
+mkdir -p "$SPARK_HOME_DIR"
+tar -xz -f "spark-hadoop.tar.gz" -C "$SPARK_HOME_DIR" --strip-components=1  | indent
 
 topic 'Install supplemental components'
 
@@ -226,6 +227,18 @@ fi
 echo "Set-up runtime environment via '.profile.d/' scripts" | indent
 mkdir -p "$BUILD_DIR/.profile.d"
 cp -r .profile.d/* "$BUILD_DIR/.profile.d/" | indent
+
+default_spark="config/spark-defaults.conf.erb"
+custom_spark="$BUILD_DIR/config/spark-defaults.conf.erb"
+target_spark="$SPARK_HOME_DIR/conf/spark-defaults.conf.erb"
+if [ -f "${custom_spark}" ]
+  then
+  echo "Using custom 'config/spark-defaults.conf.erb'" | indent
+  cp "${custom_spark}" "${target_spark}" | indent
+else
+  echo "Writing default 'spark-defaults.conf.erb'" | indent
+  cp "${default_spark}" "${target_spark}" | indent
+fi
 
 if [ -f "${BUILD_DIR}/engine.json" ]
 then

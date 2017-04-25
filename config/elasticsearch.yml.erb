@@ -1,8 +1,1 @@
 ---
-<% if ENV["PIO_ELASTICSEARCH_URL"] 
-%>es.net.http.auth.user: <%= ENV["PIO_ELASTICSEARCH_USERNAME"] %>
-es.net.http.auth.pass: <%= ENV["PIO_ELASTICSEARCH_PASSWORD"] %>
-es.nodes: <%= ENV["PIO_ELASTICSEARCH_HOSTS"] %>
-es.port: <%= ENV["PIO_ELASTICSEARCH_PORTS"] %>
-es.net.ssl: <%= ENV["PIO_ELASTICSEARCH_SCHEMES"] == "https" %><% 
-end %>
