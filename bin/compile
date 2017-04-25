@@ -192,6 +192,23 @@ if [ "${PIO_ELASTICSEARCH_URL:-}" ]
   fi
 fi
 
+if [ "${PIO_MAVEN_REPO:-}" ]
+  then
+  echo "+ Maven repo $PIO_MAVEN_REPO" | indent
+  (echo && \
+    echo '// Search for packages in custom repo via predictionio-buildpack' && \
+    echo "resolvers += \"Custom Repository via PIO_MAVEN_REPO\" at \"$PIO_MAVEN_REPO\"") >> $BUILD_DIR/build.sbt
+fi
+
+if [ -d "$BP_DIR/repo" ]
+  then
+  echo "+ local Maven repo from buildpack" | indent
+  cp -r $BP_DIR/repo $BUILD_DIR/
+  (echo && \
+    echo '// Search for packages provided by predictionio-buildpack' && \
+    echo 'resolvers += "Local Repository" at "file://"+baseDirectory.value+"/repo"') >> $BUILD_DIR/build.sbt
+fi
+
 topic "Configure PredictionIO"
 default_pio_env="config/pio-env.sh"
 custom_pio_env="$BUILD_DIR/config/pio-env.sh"
@@ -223,23 +240,6 @@ then
   mv $STAGE_THE_BUILD/* $app_prefix/
   rm -rf $STAGE_THE_BUILD
   cd $app_prefix
-
-  if [ "${PIO_MAVEN_REPO:-}" ]
-    then
-    echo "Enable custom Maven repo" | indent
-    (echo && \
-      echo '// Search for packages in custom repo via predictionio-buildpack' && \
-      echo "resolvers += \"Custom Repository via PIO_MAVEN_REPO\" at \"$PIO_MAVEN_REPO\"") >> build.sbt
-  fi
-
-  if [ -d "$BP_DIR/repo" ]
-    then
-    echo "Enable local Maven repo" | indent
-    cp -r $BP_DIR/repo .
-    (echo && \
-      echo '// Search for packages provided by predictionio-buildpack' && \
-      echo 'resolvers += "Local Repository" at "file://"+baseDirectory.value+"/repo"') >> build.sbt
-  fi
 
   if [ "${PIO_VERBOSE:-}" = "true" ]
   then
